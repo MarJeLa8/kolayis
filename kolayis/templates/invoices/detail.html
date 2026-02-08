@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+{% block title %}{{ invoice.invoice_number }} - KolayIS{% endblock %}
+{% block page_title %}{{ invoice.invoice_number }}{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2">
+    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+        {% if invoice.status == 'paid' %}bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400
+        {% elif invoice.status == 'sent' %}bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+        {% elif invoice.status == 'draft' %}bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300
+        {% elif invoice.status == 'cancelled' %}bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400{% endif %}">
+        {% if invoice.status == 'draft' %}Taslak{% elif invoice.status == 'sent' %}Gonderildi{% elif invoice.status == 'paid' %}Odendi{% elif invoice.status == 'cancelled' %}Iptal{% endif %}
+    </span>
+    {% if invoice.status in ('draft', 'sent') %}
+    <a href="/invoices/{{ invoice.id }}/edit"
+        class="px-3 py-1.5 bg-brand-500 text-white text-sm rounded-lg hover:bg-brand-600 transition-colors">Duzenle</a>
+    {% endif %}
+    <form method="POST" action="/invoices/{{ invoice.id }}/duplicate">
+        <button type="submit" class="px-3 py-1.5 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 transition-colors">Kopyala</button>
+    </form>
+    <a href="/invoices/{{ invoice.id }}/pdf"
+        class="px-3 py-1.5 bg-gray-700 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors">PDF Indir</a>
+    {% if invoice.customer.email %}
+    <form method="POST" action="/invoices/{{ invoice.id }}/send-email">
+        <button type="submit" class="px-3 py-1.5 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 transition-colors"
+            onclick="this.disabled=true; this.innerText='Gonderiliyor...'; this.form.submit();">Email Gonder</button>
+    </form>
+    {% endif %}
+    {% if invoice.status == 'draft' %}
+    <form method="POST" action="/invoices/{{ invoice.id }}/status">
+        <input type="hidden" name="status" value="sent">
+        <button type="submit" class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">Gonder</button>
+    </form>
+    {% endif %}
+    {% if invoice.status in ('draft', 'sent') %}
+    <form method="POST" action="/invoices/{{ invoice.id }}/status">
+        <input type="hidden" name="status" value="paid">
+        <button type="submit" class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">Odendi</button>
+    </form>
+    {% endif %}
+    <form method="POST" action="/invoices/{{ invoice.id }}/delete"
+        onsubmit="return confirm('Bu faturayi silmek istediginize emin misiniz?')">
+        <button type="submit" class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors">Sil</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <a href="/invoices" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Faturalar
+    </a>
+
+    <!-- Vadesi gecmis uyari banner'i -->
+    {% if invoice.due_date and invoice.status in ('draft', 'sent') and invoice.due_date < today %}
+    {% set overdue_days = (today - invoice.due_date).days %}
+    <div class="rounded-xl border-2 border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/30 p-4 flex items-start gap-3">
+        <div class="flex-shrink-0 mt-0.5">
+            <svg class="w-6 h-6 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-sm font-bold text-red-800 dark:text-red-300">Vade Suresi Dolmus!</h3>
+            <p class="text-sm text-red-700 dark:text-red-400 mt-0.5">
+                Bu faturanin vadesi <strong>{{ overdue_days }} gun</strong> once gecmistir!
+                (Vade tarihi: {{ invoice.due_date.strftime('%d.%m.%Y') }})
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Fatura bilgileri -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Musteri</div>
+                <a href="/customers/{{ invoice.customer.id }}" class="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">{{ invoice.customer.company_name }}</a>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Fatura Tarihi</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ invoice.invoice_date.strftime('%d.%m.%Y') }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Vade Tarihi</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ invoice.due_date.strftime('%d.%m.%Y') if invoice.due_date else '-' }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Olusturulma</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ invoice.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+            </div>
+        </div>
+        {% if invoice.notes %}
+        <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+            <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Not</div>
+            <div class="text-sm text-gray-900 dark:text-gray-100">{{ invoice.notes }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Fatura kalemleri -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+            <thead class="bg-gray-50/50 dark:bg-gray-700/50">
+                <tr>
+                    <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aciklama</th>
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Miktar</th>
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Birim Fiyat</th>
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">KDV</th>
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Toplam</th>
+                    {% if invoice.status == 'draft' %}
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                {% for item in invoice.items %}
+                <tr class="table-row hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
+                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ item.description }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">{{ item.quantity }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">{{ "%.2f"|format(item.unit_price) }} TL</td>
+                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">{{ "%.2f"|format(item.tax_amount) }} TL (%{{ item.tax_rate }})</td>
+                    <td class="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100 text-right">{{ "%.2f"|format(item.line_total + item.tax_amount) }} TL</td>
+                    {% if invoice.status == 'draft' %}
+                    <td class="px-6 py-4 text-right">
+                        <form method="POST" action="/invoices/{{ invoice.id }}/items/{{ item.id }}/delete"
+                            onsubmit="return confirm('Bu kalemi silmek istediginize emin misiniz?')">
+                            <button type="submit" class="text-xs text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors">Sil</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500">Fatura kalemi yok</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Toplamlar -->
+        <div class="border-t-2 border-gray-200 dark:border-gray-600 px-6 py-5">
+            <div class="flex justify-end">
+                <div class="w-72 space-y-2.5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500 dark:text-gray-400">Ara Toplam:</span>
+                        <span class="text-gray-900 dark:text-gray-100">{{ "%.2f"|format(invoice.subtotal) }} TL</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500 dark:text-gray-400">KDV Toplam:</span>
+                        <span class="text-gray-900 dark:text-gray-100">{{ "%.2f"|format(invoice.tax_total) }} TL</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold border-t border-gray-200 dark:border-gray-600 pt-2.5">
+                        <span class="dark:text-gray-100">Genel Toplam:</span>
+                        <span class="text-brand-600 dark:text-brand-400">{{ "%.2f"|format(invoice.total) }} TL</span>
+                    </div>
+                    {% if invoice.payments %}
+                    <div class="flex justify-between text-sm text-green-600 dark:text-green-400">
+                        <span>Odenen:</span>
+                        <span>-{{ "%.2f"|format(invoice.paid_amount) }} TL</span>
+                    </div>
+                    <div class="flex justify-between text-sm font-bold border-t border-gray-200 dark:border-gray-600 pt-2">
+                        <span class="{% if invoice.remaining_amount == 0 %}text-green-600 dark:text-green-400{% else %}text-red-600 dark:text-red-400{% endif %}">
+                            Kalan Borc:
+                        </span>
+                        <span class="{% if invoice.remaining_amount == 0 %}text-green-600 dark:text-green-400{% else %}text-red-600 dark:text-red-400{% endif %}">
+                            {{ "%.2f"|format(invoice.remaining_amount) }} TL
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Odeme Durumu ve Odemeler -->
+    {% if invoice.status != 'cancelled' %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Odeme Takibi
+            </h3>
+            {% if invoice.remaining_amount == 0 and invoice.total > 0 %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">
+                <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                Tamamlandi
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Progress Bar -->
+        {% if invoice.total > 0 %}
+        {% set paid_percent = ((invoice.paid_amount / invoice.total) * 100)|round(1) %}
+        {% else %}
+        {% set paid_percent = 0 %}
+        {% endif %}
+        <div class="mb-5">
+            <div class="flex justify-between text-xs mb-1.5">
+                <span class="text-gray-500 dark:text-gray-400">Odenen: {{ "%.2f"|format(invoice.paid_amount) }} TL</span>
+                <span class="text-gray-500 dark:text-gray-400">Toplam: {{ "%.2f"|format(invoice.total) }} TL</span>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                <div class="h-3 rounded-full transition-all duration-500 ease-out
+                    {% if paid_percent >= 100 %}bg-green-500{% elif paid_percent >= 50 %}bg-brand-500{% elif paid_percent > 0 %}bg-yellow-500{% else %}bg-gray-300 dark:bg-gray-600{% endif %}"
+                    style="width: {{ [paid_percent, 100]|min }}%">
+                </div>
+            </div>
+            <div class="text-right text-xs mt-1 font-medium
+                {% if paid_percent >= 100 %}text-green-600 dark:text-green-400{% else %}text-gray-500 dark:text-gray-400{% endif %}">
+                %{{ "%.1f"|format(paid_percent) }}
+            </div>
+        </div>
+
+        <!-- Odeme Tablosu -->
+        {% if invoice.payments %}
+        <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600 mb-5">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                <thead class="bg-gray-50 dark:bg-gray-700/50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tarih</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tutar</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Yontem</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Not</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    {% for payment in invoice.payments|sort(attribute='payment_date', reverse=true) %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-200">
+                            {{ payment.payment_date.strftime('%d.%m.%Y') }}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-green-600 dark:text-green-400 text-right">
+                            {{ "%.2f"|format(payment.amount) }} TL
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                            {% if payment.payment_method == 'cash' %}
+                                <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Nakit</span>
+                            {% elif payment.payment_method == 'bank_transfer' %}
+                                <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4"></path></svg> Banka Havale/EFT</span>
+                            {% elif payment.payment_method == 'credit_card' %}
+                                <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg> Kredi Karti</span>
+                            {% elif payment.payment_method == 'check' %}
+                                <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Cek</span>
+                            {% else %}
+                                {{ payment.payment_method }}
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                            {{ payment.notes or '-' }}
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <form method="POST" action="/invoices/{{ invoice.id }}/payments/{{ payment.id }}/delete"
+                                onsubmit="return confirm('Bu odemeyi silmek istediginize emin misiniz?')">
+                                <button type="submit" class="text-xs text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors">Sil</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-6 mb-5 border border-dashed border-gray-200 dark:border-gray-600 rounded-lg">
+            <svg class="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <p class="text-sm text-gray-400 dark:text-gray-500">Henuz odeme yapilmamis</p>
+        </div>
+        {% endif %}
+
+        <!-- Odeme Ekle Formu -->
+        {% if invoice.remaining_amount > 0 %}
+        <div class="border-t border-gray-100 dark:border-gray-700 pt-5">
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Odeme Ekle</h4>
+            <form method="POST" action="/invoices/{{ invoice.id }}/payments" class="grid grid-cols-12 gap-3 items-end">
+                <div class="col-span-12 sm:col-span-3">
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tutar (TL)</label>
+                    <input type="number" name="amount" step="0.01" min="0.01"
+                        max="{{ "%.2f"|format(invoice.remaining_amount) }}" required
+                        placeholder="{{ "%.2f"|format(invoice.remaining_amount) }}"
+                        class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                        focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+                        placeholder-gray-400 dark:placeholder-gray-500">
+                </div>
+                <div class="col-span-12 sm:col-span-2">
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tarih</label>
+                    <input type="date" name="payment_date" required
+                        value="{{ today if today is defined else '' }}"
+                        class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                        focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                </div>
+                <div class="col-span-12 sm:col-span-3">
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Odeme Yontemi</label>
+                    <select name="payment_method"
+                        class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                        focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                        <option value="bank_transfer">Banka Havale/EFT</option>
+                        <option value="cash">Nakit</option>
+                        <option value="credit_card">Kredi Karti</option>
+                        <option value="check">Cek</option>
+                    </select>
+                </div>
+                <div class="col-span-12 sm:col-span-2">
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Not</label>
+                    <input type="text" name="notes" placeholder="Opsiyonel"
+                        class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                        focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+                        placeholder-gray-400 dark:placeholder-gray-500">
+                </div>
+                <div class="col-span-12 sm:col-span-2">
+                    <button type="submit"
+                        class="w-full px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg
+                        hover:bg-green-700 transition-colors flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Odeme Ekle
+                    </button>
+                </div>
+            </form>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                Kalan borc: <strong class="text-gray-600 dark:text-gray-300">{{ "%.2f"|format(invoice.remaining_amount) }} TL</strong>
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Kalem ekleme formu (sadece taslak faturalarda) -->
+    {% if invoice.status == 'draft' %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Kalem Ekle</h3>
+        <form method="POST" action="/invoices/{{ invoice.id }}/items" class="grid grid-cols-12 gap-2 items-end">
+            <div class="col-span-4">
+                <label class="block text-xs text-gray-500 dark:text-gray-400">Aciklama</label>
+                <input type="text" name="description" required
+                    class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs text-gray-500 dark:text-gray-400">Miktar</label>
+                <input type="number" name="quantity" step="0.01" min="0.01" required value="1"
+                    class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs text-gray-500 dark:text-gray-400">Birim Fiyat</label>
+                <input type="number" name="unit_price" step="0.01" min="0" required
+                    class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs text-gray-500 dark:text-gray-400">KDV %</label>
+                <select name="tax_rate"
+                    class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    <option value="20">%20</option>
+                    <option value="10">%10</option>
+                    <option value="1">%1</option>
+                    <option value="0">%0</option>
+                </select>
+            </div>
+            <div class="col-span-2">
+                <button type="submit"
+                    class="w-full px-2.5 py-2 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 transition-colors">Ekle</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}{% if webhook %}Webhook Duzenle{% else %}Yeni Webhook{% endif %} - KolayIS{% endblock %}
+{% block page_title %}{% if webhook %}Webhook Duzenle{% else %}Yeni Webhook{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <a href="/webhooks" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Webhook'lar
+    </a>
+
+    <form method="POST" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-6">
+        <!-- URL -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook URL *</label>
+            <input type="url" name="url" required
+                value="{{ webhook.url if webhook else '' }}"
+                placeholder="https://ornek.com/webhook"
+                class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Olaylar gerceklestiginde bu URL'ye POST istegi gonderilir.</p>
+        </div>
+
+        <!-- Secret -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {% if webhook %}Gizli Anahtar (degistirmek icin yeni deger girin){% else %}Gizli Anahtar (Secret) *{% endif %}
+            </label>
+            <div class="relative mt-1">
+                <input type="password" name="secret" id="secretInput"
+                    {% if not webhook %}required{% endif %}
+                    placeholder="{% if webhook %}Degistirmek istemiyorsaniz bos birakin{% else %}HMAC imzalama icin gizli anahtar{% endif %}"
+                    class="w-full px-3 py-2.5 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                <button type="button" onclick="toggleSecret()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                </button>
+            </div>
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Gonderilen isteklerin X-Webhook-Signature header'i ile HMAC-SHA256 imzalanmasi icin kullanilir.</p>
+        </div>
+
+        <!-- Aciklama -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aciklama</label>
+            <input type="text" name="description"
+                value="{{ webhook.description if webhook and webhook.description else '' }}"
+                placeholder="Ornegin: Muhasebe sistemi entegrasyonu"
+                class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+        </div>
+
+        <!-- Olay Secimi -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Dinlenecek Olaylar *</label>
+
+            {% set current_events = [] %}
+            {% if webhook %}
+                {% set current_events = webhook.events | replace('[', '') | replace(']', '') | replace('"', '') | replace("'", '') | split(',') | map('trim') | list %}
+            {% endif %}
+
+            <!-- Fatura Olaylari -->
+            <div class="mb-4">
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Fatura</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ev in ['invoice.created', 'invoice.paid', 'invoice.cancelled'] %}
+                    <label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                        <input type="checkbox" name="events" value="{{ ev }}"
+                            {% if ev in current_events %}checked{% endif %}
+                            class="w-4 h-4 text-brand-600 border-gray-300 dark:border-gray-600 rounded focus:ring-brand-500 dark:bg-gray-700">
+                        <div>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ ev }}</span>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
+                                {% if ev == 'invoice.created' %}Yeni fatura olusturuldugunda
+                                {% elif ev == 'invoice.paid' %}Fatura odendi olarak isaretlendiginde
+                                {% elif ev == 'invoice.cancelled' %}Fatura iptal edildiginde{% endif %}
+                            </p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Musteri Olaylari -->
+            <div class="mb-4">
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Musteri</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ev in ['customer.created', 'customer.updated', 'customer.deleted'] %}
+                    <label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                        <input type="checkbox" name="events" value="{{ ev }}"
+                            {% if ev in current_events %}checked{% endif %}
+                            class="w-4 h-4 text-brand-600 border-gray-300 dark:border-gray-600 rounded focus:ring-brand-500 dark:bg-gray-700">
+                        <div>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ ev }}</span>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
+                                {% if ev == 'customer.created' %}Yeni musteri eklediginde
+                                {% elif ev == 'customer.updated' %}Musteri bilgileri guncellendiginde
+                                {% elif ev == 'customer.deleted' %}Musteri silindiginde{% endif %}
+                            </p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Odeme Olaylari -->
+            <div class="mb-4">
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Odeme</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                        <input type="checkbox" name="events" value="payment.received"
+                            {% if 'payment.received' in current_events %}checked{% endif %}
+                            class="w-4 h-4 text-brand-600 border-gray-300 dark:border-gray-600 rounded focus:ring-brand-500 dark:bg-gray-700">
+                        <div>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">payment.received</span>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">Yeni odeme alindinda</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Urun Olaylari -->
+            <div class="mb-2">
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Urun</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ev in ['product.created', 'product.updated'] %}
+                    <label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                        <input type="checkbox" name="events" value="{{ ev }}"
+                            {% if ev in current_events %}checked{% endif %}
+                            class="w-4 h-4 text-brand-600 border-gray-300 dark:border-gray-600 rounded focus:ring-brand-500 dark:bg-gray-700">
+                        <div>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ ev }}</span>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
+                                {% if ev == 'product.created' %}Yeni urun eklediginde
+                                {% elif ev == 'product.updated' %}Urun bilgileri guncellendiginde{% endif %}
+                            </p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Aktif/Pasif -->
+        <div class="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+            <input type="checkbox" name="is_active" value="true" id="isActiveCheck"
+                {% if not webhook or webhook.is_active %}checked{% endif %}
+                class="w-4 h-4 text-brand-600 border-gray-300 dark:border-gray-600 rounded focus:ring-brand-500 dark:bg-gray-700">
+            <label for="isActiveCheck" class="cursor-pointer">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Webhook Aktif</span>
+                <p class="text-xs text-gray-400 dark:text-gray-500">Pasif yapilirsa olaylar gerceklesse bile bildirim gonderilmez.</p>
+            </label>
+        </div>
+
+        <!-- Butonlar -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <a href="/webhooks" class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Iptal</a>
+            <button type="submit"
+                class="px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                {% if webhook %}Kaydet{% else %}Olustur{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleSecret() {
+    var input = document.getElementById('secretInput');
+    var icon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+    } else {
+        input.type = 'password';
+    }
+}
+</script>
+{% endblock %}

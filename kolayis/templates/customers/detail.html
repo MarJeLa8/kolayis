@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.company_name }} - KolayIS{% endblock %}
+{% block page_title %}{{ customer.company_name }}{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2">
+    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+        {% if customer.status == 'active' %}bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400
+        {% elif customer.status == 'inactive' %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400
+        {% elif customer.status == 'lead' %}bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400
+        {% else %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400{% endif %}">
+        {{ customer.status }}
+    </span>
+    <a href="/customers/{{ customer.id }}/edit"
+        class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">Duzenle</a>
+    <form method="POST" action="/customers/{{ customer.id }}/delete"
+        onsubmit="return confirm('Bu musteriyi silmek istediginize emin misiniz?')">
+        <button type="submit"
+            class="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors">Sil</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <a href="/customers" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Musteriler
+    </a>
+
+    <!-- Musteri bilgileri -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-5">Musteri Bilgileri</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Sirket Adi</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ customer.company_name }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Ilgili Kisi</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ customer.contact_name or '-' }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Email</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ customer.email or '-' }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Telefon</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ customer.phone or '-' }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Adres</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ customer.address or '-' }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Vergi Numarasi</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ customer.tax_number or '-' }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Olusturulma</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ customer.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gorusme notlari -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Gorusme Notlari</h2>
+        </div>
+
+        <!-- Not ekleme formu -->
+        <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30">
+            <form method="POST" action="/customers/{{ customer.id }}/notes" class="space-y-3">
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <input type="text" name="title" required placeholder="Not basligi"
+                            class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    </div>
+                    <div class="w-36">
+                        <select name="note_type"
+                            class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                            <option value="phone">Telefon</option>
+                            <option value="email">Email</option>
+                            <option value="meeting">Toplanti</option>
+                            <option value="other">Diger</option>
+                        </select>
+                    </div>
+                </div>
+                <textarea name="content" required placeholder="Not icerigi..." rows="2"
+                    class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"></textarea>
+                <button type="submit"
+                    class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                    Not Ekle
+                </button>
+            </form>
+        </div>
+
+        <!-- Not listesi -->
+        <div class="divide-y divide-gray-50 dark:divide-gray-700">
+            {% for note in notes %}
+            <div class="px-6 py-4 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ note.title }}</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
+                                {% if note.note_type == 'phone' %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400
+                                {% elif note.note_type == 'email' %}bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400
+                                {% elif note.note_type == 'meeting' %}bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400
+                                {% else %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400{% endif %}">
+                                {{ note.note_type }}
+                            </span>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ note.content }}</p>
+                        <div class="mt-1.5 text-xs text-gray-400 dark:text-gray-500">{{ note.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                    </div>
+                    <form method="POST" action="/customers/{{ customer.id }}/notes/{{ note.id }}/delete"
+                        onsubmit="return confirm('Bu notu silmek istediginize emin misiniz?')">
+                        <button type="submit" class="text-xs text-red-400 hover:text-red-600 transition-colors">Sil</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="px-6 py-12 text-center">
+                <svg class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+                <p class="text-gray-400 dark:text-gray-500 text-sm">Henuz gorusme notu eklenmemis.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

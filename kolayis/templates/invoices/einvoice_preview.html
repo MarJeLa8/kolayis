@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}E-Fatura Onizleme - {{ invoice.invoice_number }} - KolayIS{% endblock %}
+{% block page_title %}E-Fatura Onizleme{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2">
+    <a href="/invoices/{{ invoice.id }}"
+        class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+        Fatura Detay
+    </a>
+    <a href="/api/v1/invoices/{{ invoice.id }}/xml"
+        class="px-3 py-1.5 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 transition-colors inline-flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        XML Indir
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <a href="/invoices/{{ invoice.id }}" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        {{ invoice.invoice_number }} - Fatura Detay
+    </a>
+
+    <!-- Fatura Bilgi Ozeti -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-lg bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ invoice.invoice_number }}</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">UBL-TR 2.1 E-Fatura</p>
+            </div>
+            <div class="ml-auto">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                    {% if invoice.status == 'paid' %}bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400
+                    {% elif invoice.status == 'sent' %}bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+                    {% elif invoice.status == 'draft' %}bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300
+                    {% elif invoice.status == 'cancelled' %}bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400{% endif %}">
+                    {% if invoice.status == 'draft' %}Taslak{% elif invoice.status == 'sent' %}Gonderildi{% elif invoice.status == 'paid' %}Odendi{% elif invoice.status == 'cancelled' %}Iptal{% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Musteri</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ invoice.customer.company_name }}</div>
+                {% if invoice.customer.tax_number %}
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">VKN/TCKN: {{ invoice.customer.tax_number }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Fatura Tarihi</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ invoice.invoice_date.strftime('%d.%m.%Y') }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Vade Tarihi</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ invoice.due_date.strftime('%d.%m.%Y') if invoice.due_date else '-' }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Genel Toplam</div>
+                <div class="text-sm font-bold text-brand-600 dark:text-brand-400">{{ "%.2f"|format(invoice.total) }} TL</div>
+            </div>
+        </div>
+
+        <!-- Kalem ozeti tablosu -->
+        <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Fatura Kalemleri</h3>
+            <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400">#</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400">Aciklama</th>
+                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400">Miktar</th>
+                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400">Birim Fiyat</th>
+                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400">KDV %</th>
+                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400">KDV Tutar</th>
+                            <th class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400">Toplam</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        {% for item in invoice.items %}
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30">
+                            <td class="px-4 py-2.5 text-sm text-gray-400 dark:text-gray-500">{{ loop.index }}</td>
+                            <td class="px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100">{{ item.description }}</td>
+                            <td class="px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 text-right">{{ item.quantity }}</td>
+                            <td class="px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 text-right">{{ "%.2f"|format(item.unit_price) }} TL</td>
+                            <td class="px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 text-right">%{{ item.tax_rate }}</td>
+                            <td class="px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 text-right">{{ "%.2f"|format(item.tax_amount) }} TL</td>
+                            <td class="px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-100 text-right">{{ "%.2f"|format(item.line_total + item.tax_amount) }} TL</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 text-right">Ara Toplam:</td>
+                            <td class="px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 text-right">{{ "%.2f"|format(invoice.subtotal) }} TL</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 text-right">KDV Toplam:</td>
+                            <td class="px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 text-right">{{ "%.2f"|format(invoice.tax_total) }} TL</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="px-4 py-2.5 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">Genel Toplam:</td>
+                            <td class="px-4 py-2.5 text-sm font-bold text-brand-600 dark:text-brand-400 text-right">{{ "%.2f"|format(invoice.total) }} TL</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- XML Onizleme -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                </svg>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">UBL-TR XML Onizleme</h3>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="copyXml()" id="copy-btn"
+                    class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors inline-flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    Kopyala
+                </button>
+                <a href="/api/v1/invoices/{{ invoice.id }}/xml"
+                    class="px-3 py-1.5 bg-brand-600 text-white text-xs rounded-lg hover:bg-brand-700 transition-colors inline-flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    XML Indir
+                </a>
+            </div>
+        </div>
+
+        <!-- XML icerigi - syntax highlighted -->
+        <div class="relative">
+            <pre id="xml-content" class="p-6 text-sm leading-relaxed overflow-x-auto bg-gray-50 dark:bg-gray-900/50 text-gray-800 dark:text-gray-200 font-mono max-h-[600px] overflow-y-auto"><code>{{ xml_content }}</code></pre>
+        </div>
+    </div>
+
+    <!-- Bilgi notu -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-4">
+        <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-300">UBL-TR 2.1 E-Fatura Hakkinda</h4>
+                <p class="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                    Bu XML, GIB (Gelir Idaresi Baskanligi) e-fatura standartlarina uygun UBL-TR 2.1 formatinda olusturulmustur.
+                    XML dosyasini indirerek e-fatura entegrator firmaniza iletebilir veya GIB portali uzerinden gonderebilirsiniz.
+                </p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-800/40 text-blue-700 dark:text-blue-300">UBL 2.1</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-800/40 text-blue-700 dark:text-blue-300">GIB Uyumlu</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-800/40 text-blue-700 dark:text-blue-300">TICARIFATURA</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-800/40 text-blue-700 dark:text-blue-300">KDV Dahil</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // XML kopyalama fonksiyonu
+    function copyXml() {
+        var xmlText = document.getElementById('xml-content').innerText;
+        navigator.clipboard.writeText(xmlText).then(function() {
+            var btn = document.getElementById('copy-btn');
+            var originalHtml = btn.innerHTML;
+            btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Kopyalandi!';
+            btn.classList.add('bg-green-100', 'dark:bg-green-900/30', 'text-green-700', 'dark:text-green-400');
+            btn.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-300');
+            setTimeout(function() {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('bg-green-100', 'dark:bg-green-900/30', 'text-green-700', 'dark:text-green-400');
+                btn.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-300');
+            }, 2000);
+        });
+    }
+</script>
+{% endblock %}

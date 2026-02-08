@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm 2cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10px;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- Header --- */
+        .header-table {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .header-table td {
+            vertical-align: top;
+            padding: 0;
+        }
+        .company-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2563eb;
+            margin: 0;
+            padding: 0;
+        }
+        .company-sub {
+            color: #888;
+            font-size: 9px;
+            margin-top: 2px;
+        }
+        .invoice-label {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            text-align: right;
+        }
+        .invoice-number {
+            font-size: 11px;
+            color: #555;
+            text-align: right;
+            margin-top: 3px;
+        }
+
+        /* --- Durum badge --- */
+        .status-badge {
+            display: inline;
+            padding: 2px 8px;
+            font-size: 9px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .status-draft { background-color: #f3f4f6; color: #374151; }
+        .status-sent { background-color: #dbeafe; color: #1e40af; }
+        .status-paid { background-color: #d1fae5; color: #065f46; }
+        .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+
+        /* --- Ayirici cizgi --- */
+        .divider {
+            border-top: 2px solid #2563eb;
+            margin: 10px 0;
+        }
+
+        /* --- Bilgi alani (musteri + fatura tarihleri) --- */
+        .info-table {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .info-table td {
+            vertical-align: top;
+            padding: 0;
+        }
+        .section-title {
+            font-size: 8px;
+            font-weight: bold;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .customer-name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #111;
+            margin-bottom: 3px;
+        }
+        .customer-detail {
+            font-size: 9px;
+            color: #555;
+            line-height: 1.5;
+        }
+        .date-table {
+            width: 100%;
+        }
+        .date-table td {
+            padding: 3px 0;
+            font-size: 10px;
+        }
+        .date-label {
+            color: #888;
+            text-align: right;
+            padding-right: 10px;
+        }
+        .date-value {
+            font-weight: bold;
+            text-align: right;
+            color: #111;
+        }
+
+        /* --- Kalemler tablosu --- */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .items-table th {
+            background-color: #2563eb;
+            color: white;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .items-table th.right {
+            text-align: right;
+        }
+        .items-table td {
+            padding: 7px 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 10px;
+        }
+        .items-table td.right {
+            text-align: right;
+        }
+        .items-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* --- Toplamlar --- */
+        .totals-wrapper {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .totals-table {
+            width: 240px;
+            margin-left: auto;
+        }
+        .totals-table td {
+            padding: 3px 0;
+            font-size: 10px;
+        }
+        .totals-label {
+            text-align: right;
+            padding-right: 12px;
+            color: #888;
+        }
+        .totals-value {
+            text-align: right;
+            font-weight: bold;
+            color: #333;
+        }
+        .grand-total-row td {
+            padding-top: 5px;
+            font-size: 13px;
+        }
+        .grand-total-row .totals-label {
+            color: #333;
+            font-weight: bold;
+        }
+        .grand-total-row .totals-value {
+            color: #111;
+        }
+
+        /* --- Notlar --- */
+        .notes-section {
+            margin-top: 20px;
+            padding-top: 8px;
+            border-top: 1px solid #eee;
+        }
+        .notes-title {
+            font-size: 8px;
+            font-weight: bold;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+        .notes-text {
+            font-size: 9px;
+            color: #555;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            color: #bbb;
+            border-top: 1px solid #eee;
+            padding-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <table class="header-table">
+        <tr>
+            <td style="width: 50%;">
+                <div class="company-name">KolayIS</div>
+                <div class="company-sub">CRM Sistemi</div>
+            </td>
+            <td style="width: 50%; text-align: right;">
+                <div class="invoice-label">FATURA</div>
+                <div class="invoice-number">{{ invoice.invoice_number }}</div>
+                <div style="text-align: right; margin-top: 4px;">
+                    <span class="status-badge status-{{ invoice.status }}">
+                        {% if invoice.status == 'draft' %}TASLAK{% elif invoice.status == 'sent' %}GONDERILDI{% elif invoice.status == 'paid' %}ODENDI{% elif invoice.status == 'cancelled' %}IPTAL{% endif %}
+                    </span>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="divider"></div>
+
+    <!-- ===== MUSTERI + TARIHLER ===== -->
+    <table class="info-table">
+        <tr>
+            <td style="width: 55%;">
+                <div class="section-title">Musteri</div>
+                <div class="customer-name">{{ invoice.customer.company_name }}</div>
+                <div class="customer-detail">
+                    {% if invoice.customer.contact_name %}{{ invoice.customer.contact_name }}<br/>{% endif %}
+                    {% if invoice.customer.email %}{{ invoice.customer.email }}<br/>{% endif %}
+                    {% if invoice.customer.phone %}{{ invoice.customer.phone }}<br/>{% endif %}
+                    {% if invoice.customer.address %}{{ invoice.customer.address }}<br/>{% endif %}
+                    {% if invoice.customer.tax_number %}VKN: {{ invoice.customer.tax_number }}{% endif %}
+                </div>
+            </td>
+            <td style="width: 45%;">
+                <table class="date-table">
+                    <tr>
+                        <td class="date-label">Fatura Tarihi:</td>
+                        <td class="date-value">{{ invoice.invoice_date.strftime('%d.%m.%Y') }}</td>
+                    </tr>
+                    {% if invoice.due_date %}
+                    <tr>
+                        <td class="date-label">Vade Tarihi:</td>
+                        <td class="date-value">{{ invoice.due_date.strftime('%d.%m.%Y') }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if invoice.status == 'paid' %}
+                    <tr>
+                        <td class="date-label">Durum:</td>
+                        <td class="date-value" style="color: #065f46;">ODENDI</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ===== KALEMLER ===== -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 40%;">Aciklama</th>
+                <th class="right" style="width: 12%;">Miktar</th>
+                <th class="right" style="width: 15%;">Birim Fiyat</th>
+                <th class="right" style="width: 10%;">KDV</th>
+                <th class="right" style="width: 18%;">Toplam</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ item.description }}</td>
+                <td class="right">{{ "%.2f"|format(item.quantity) }}</td>
+                <td class="right">{{ "%.2f"|format(item.unit_price) }} TL</td>
+                <td class="right">%{{ item.tax_rate }}</td>
+                <td class="right">{{ "%.2f"|format(item.line_total) }} TL</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ===== TOPLAMLAR ===== -->
+    <table class="totals-wrapper">
+        <tr>
+            <td>
+                <table class="totals-table">
+                    <tr>
+                        <td class="totals-label">Ara Toplam:</td>
+                        <td class="totals-value">{{ "%.2f"|format(invoice.subtotal) }} TL</td>
+                    </tr>
+                    <tr>
+                        <td class="totals-label">KDV Toplam:</td>
+                        <td class="totals-value">{{ "%.2f"|format(invoice.tax_total) }} TL</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="border-top: 2px solid #2563eb; padding: 0; height: 8px; line-height: 0; font-size: 0;">&nbsp;</td>
+                    </tr>
+                    <tr class="grand-total-row">
+                        <td class="totals-label">GENEL TOPLAM:</td>
+                        <td class="totals-value">{{ "%.2f"|format(invoice.total) }} TL</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    {% if invoice.notes %}
+    <div class="notes-section">
+        <div class="notes-title">Notlar</div>
+        <div class="notes-text">{{ invoice.notes }}</div>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        KolayIS CRM &bull; Bu fatura {{ invoice.created_at.strftime('%d.%m.%Y %H:%M') }} tarihinde olusturulmustur.
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,281 @@
+{#
+  Dosya Ekleri Partial Template
+
+  Kullanim:
+    {% include "attachments/partial_list.html" %}
+
+  Gerekli degiskenler:
+    - attachments: Attachment listesi
+    - entity_type: "customer", "invoice", "quotation"
+    - entity_id: Varligin UUID'si
+
+  Bu partial; musteri detay, fatura detay gibi sayfalara include edilir.
+#}
+
+<!-- Dosya Ekleri Bolumu -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+            </svg>
+            Dosya Ekleri
+            {% if attachments %}
+            <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-brand-500 rounded-full">
+                {{ attachments|length }}
+            </span>
+            {% endif %}
+        </h2>
+    </div>
+
+    <!-- Dosya Yukleme Formu -->
+    <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30">
+        <form method="POST" action="/attachments/upload" enctype="multipart/form-data"
+            id="attachment-upload-form" class="space-y-3">
+            <input type="hidden" name="entity_type" value="{{ entity_type }}">
+            <input type="hidden" name="entity_id" value="{{ entity_id }}">
+
+            <!-- Drag & Drop Alani -->
+            <div id="drop-zone"
+                class="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6
+                       hover:border-brand-400 dark:hover:border-brand-500 transition-colors cursor-pointer
+                       bg-white dark:bg-gray-800">
+                <input type="file" name="file" id="file-input" required
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv,.txt"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                <div class="text-center" id="drop-zone-content">
+                    <svg class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Dosyayi surukleyip birakin veya <span class="text-brand-600 dark:text-brand-400 font-medium">tiklayarak secin</span>
+                    </p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        PDF, JPG, PNG, DOC, DOCX, XLS, XLSX, CSV, TXT - Maks. 10 MB
+                    </p>
+                </div>
+                <!-- Secilen dosya bilgisi (JS ile gosterilir) -->
+                <div id="file-info" class="hidden text-center">
+                    <svg class="w-8 h-8 text-brand-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100" id="file-name"></p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500" id="file-size-info"></p>
+                </div>
+            </div>
+
+            <!-- Aciklama ve Yukle Butonu -->
+            <div class="flex gap-3 items-end">
+                <div class="flex-1">
+                    <input type="text" name="description" placeholder="Dosya aciklamasi (opsiyonel)" maxlength="255"
+                        class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                        focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+                        placeholder-gray-400 dark:placeholder-gray-500">
+                </div>
+                <button type="submit" id="upload-btn"
+                    class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg
+                    hover:bg-brand-700 transition-colors flex items-center gap-1.5 whitespace-nowrap
+                    disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    Yukle
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Dosya Listesi -->
+    <div class="divide-y divide-gray-50 dark:divide-gray-700">
+        {% if attachments %}
+        {% for att in attachments %}
+        <div class="px-6 py-4 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3 min-w-0">
+                    <!-- Dosya tipi ikonu -->
+                    <div class="flex-shrink-0">
+                        {% if att.mime_type.startswith('image/') %}
+                        <div class="w-9 h-9 rounded-lg bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-500 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        {% elif att.mime_type == 'application/pdf' %}
+                        <div class="w-9 h-9 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        {% elif 'spreadsheet' in att.mime_type or 'excel' in att.mime_type or att.mime_type == 'text/csv' %}
+                        <div class="w-9 h-9 rounded-lg bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        {% elif 'word' in att.mime_type or att.mime_type == 'application/msword' %}
+                        <div class="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        {% else %}
+                        <div class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                            </svg>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Dosya bilgileri -->
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title="{{ att.original_filename }}">
+                            {{ att.original_filename }}
+                        </p>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-xs text-gray-400 dark:text-gray-500">
+                                {% if att.file_size < 1024 %}
+                                    {{ att.file_size }} B
+                                {% elif att.file_size < 1048576 %}
+                                    {{ "%.1f"|format(att.file_size / 1024) }} KB
+                                {% else %}
+                                    {{ "%.1f"|format(att.file_size / 1048576) }} MB
+                                {% endif %}
+                            </span>
+                            <span class="text-gray-300 dark:text-gray-600">|</span>
+                            <span class="text-xs text-gray-400 dark:text-gray-500">
+                                {{ att.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            </span>
+                            {% if att.description %}
+                            <span class="text-gray-300 dark:text-gray-600">|</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 truncate" title="{{ att.description }}">
+                                {{ att.description }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aksiyonlar: Indir / Sil -->
+                <div class="flex items-center gap-2 flex-shrink-0 ml-3">
+                    <a href="/attachments/{{ att.id }}/download"
+                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-brand-600 dark:text-brand-400
+                        bg-brand-50 dark:bg-brand-900/20 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900/40 transition-colors"
+                        title="Indir">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Indir
+                    </a>
+                    <form method="POST" action="/attachments/{{ att.id }}/delete"
+                        onsubmit="return confirm('Bu dosya ekini silmek istediginize emin misiniz?')">
+                        <button type="submit"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-500 dark:text-red-400
+                            bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                            title="Sil">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            Sil
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <svg class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+            </svg>
+            <p class="text-gray-400 dark:text-gray-500 text-sm">Henuz dosya eki eklenmemis.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Drag & Drop ve Dosya Secimi JavaScript -->
+<script>
+(function() {
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const uploadBtn = document.getElementById('upload-btn');
+    const dropContent = document.getElementById('drop-zone-content');
+    const fileInfo = document.getElementById('file-info');
+    const fileName = document.getElementById('file-name');
+    const fileSizeInfo = document.getElementById('file-size-info');
+
+    // Dosya boyutunu okunabilir formata cevir
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // Secilen dosyayi goster
+    function showFileInfo(file) {
+        if (file) {
+            fileName.textContent = file.name;
+            fileSizeInfo.textContent = formatFileSize(file.size);
+            dropContent.classList.add('hidden');
+            fileInfo.classList.remove('hidden');
+            uploadBtn.disabled = false;
+
+            // Boyut kontrolu (10 MB)
+            if (file.size > 10 * 1024 * 1024) {
+                fileSizeInfo.textContent = formatFileSize(file.size) + ' - BOYUT LIMITI ASILDI!';
+                fileSizeInfo.classList.add('text-red-500');
+                uploadBtn.disabled = true;
+            } else {
+                fileSizeInfo.classList.remove('text-red-500');
+            }
+        }
+    }
+
+    // Dosya secildiginde
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            showFileInfo(this.files[0]);
+        }
+    });
+
+    // Drag & Drop olaylari
+    ['dragenter', 'dragover'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('border-brand-400', 'dark:border-brand-500', 'bg-brand-50/50', 'dark:bg-brand-900/10');
+            dropZone.classList.remove('border-gray-300', 'dark:border-gray-600');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('border-brand-400', 'dark:border-brand-500', 'bg-brand-50/50', 'dark:bg-brand-900/10');
+            dropZone.classList.add('border-gray-300', 'dark:border-gray-600');
+        });
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            // DataTransfer'dan file input'a dosya ata
+            fileInput.files = files;
+            showFileInfo(files[0]);
+        }
+    });
+
+    // Form gonderilirken butonu devre disi birak
+    document.getElementById('attachment-upload-form').addEventListener('submit', function() {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Yukleniyor...';
+    });
+})();
+</script>

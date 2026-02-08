@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Ayarlar - KolayIS{% endblock %}
+{% block page_title %}Ayarlar{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    {% if success %}
+    <div class="bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-xl p-4 text-sm border border-green-100 dark:border-green-800">
+        {{ success }}
+    </div>
+    {% endif %}
+    {% if error %}
+    <div class="bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-xl p-4 text-sm border border-red-100 dark:border-red-800">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Tema Ayarlari -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Tema Ayarlari</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">Arayuz gorunumunu tercihlerinize gore ayarlayin.</p>
+        <div class="grid grid-cols-3 gap-3" id="themeSelector">
+            <!-- Acik Tema -->
+            <button type="button" onclick="selectThemeOption('light')" id="themeOptLight"
+                class="theme-option flex flex-col items-center p-4 rounded-xl border-2 transition-all hover:border-brand-300 dark:hover:border-brand-500 cursor-pointer">
+                <div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-600 flex items-center justify-center mb-2">
+                    <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </div>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Acik</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Aydinlik tema</span>
+            </button>
+            <!-- Koyu Tema -->
+            <button type="button" onclick="selectThemeOption('dark')" id="themeOptDark"
+                class="theme-option flex flex-col items-center p-4 rounded-xl border-2 transition-all hover:border-brand-300 dark:hover:border-brand-500 cursor-pointer">
+                <div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-600 flex items-center justify-center mb-2">
+                    <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </div>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Koyu</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Karanlik tema</span>
+            </button>
+            <!-- Sistem Temasi -->
+            <button type="button" onclick="selectThemeOption('system')" id="themeOptSystem"
+                class="theme-option flex flex-col items-center p-4 rounded-xl border-2 transition-all hover:border-brand-300 dark:hover:border-brand-500 cursor-pointer">
+                <div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-600 flex items-center justify-center mb-2">
+                    <svg class="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </div>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Sistem</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Otomatik</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Profil Bilgileri -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-5">Profil Bilgileri</h2>
+        <form method="POST" action="/settings/profile" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ad Soyad</label>
+                <input type="text" name="full_name" required value="{{ user.full_name }}"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input type="email" name="email" required value="{{ user.email }}"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div class="flex justify-end pt-2">
+                <button type="submit"
+                    class="px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                    Profili Guncelle
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sifre Degistir -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-5">Sifre Degistir</h2>
+        <form method="POST" action="/settings/password" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Mevcut Sifre</label>
+                <input type="password" name="current_password" required
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Yeni Sifre</label>
+                <input type="password" name="new_password" required minlength="8"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    placeholder="En az 8 karakter">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Yeni Sifre (Tekrar)</label>
+                <input type="password" name="new_password_confirm" required minlength="8"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div class="flex justify-end pt-2">
+                <button type="submit"
+                    class="px-6 py-2.5 bg-gray-700 dark:bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-500 transition-colors">
+                    Sifre Degistir
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Iki Adimli Dogrulama (2FA) -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Iki Adimli Dogrulama</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Hesabinizi daha guvenli hale getirmek icin 2FA aktif edin.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                {% if user.totp_secret %}
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
+                    Aktif
+                </span>
+                {% else %}
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5"></span>
+                    Pasif
+                </span>
+                {% endif %}
+                <a href="/settings/2fa"
+                    class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                    {% if user.totp_secret %}Yonet{% else %}Aktif Et{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Ayarlari -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Email Ayarlari</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Fatura email gonderimi icin SMTP ayarlari .env dosyasindan okunur.</p>
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 text-sm">
+            <div class="flex items-center space-x-2">
+                {% if email_configured %}
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <span class="text-green-700 dark:text-green-400 font-medium">SMTP yapilandirilmis</span>
+                {% else %}
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span class="text-red-700 dark:text-red-400 font-medium">SMTP yapilandirilmamis</span>
+                {% endif %}
+            </div>
+            {% if not email_configured %}
+            <p class="mt-2 text-gray-500 dark:text-gray-400 text-xs">.env dosyasina SMTP_HOST, SMTP_USER, SMTP_PASSWORD ekleyin.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function selectThemeOption(theme) {
+    // setTheme fonksiyonu base.html'de tanimli
+    setTheme(theme);
+    highlightActiveThemeOption(theme);
+}
+
+function highlightActiveThemeOption(activeTheme) {
+    var options = document.querySelectorAll('.theme-option');
+    options.forEach(function(opt) {
+        opt.classList.remove('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/20', 'dark:border-brand-500');
+        opt.classList.add('border-gray-200', 'dark:border-gray-600');
+    });
+    var activeId = 'themeOpt' + activeTheme.charAt(0).toUpperCase() + activeTheme.slice(1);
+    var activeEl = document.getElementById(activeId);
+    if (activeEl) {
+        activeEl.classList.remove('border-gray-200', 'dark:border-gray-600');
+        activeEl.classList.add('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/20', 'dark:border-brand-500');
+    }
+}
+
+// Sayfa yuklendiginde mevcut tema secenegini vurgula
+(function() {
+    var stored = localStorage.getItem('kolayis-theme');
+    var currentTheme = stored ? stored : 'system';
+    highlightActiveThemeOption(currentTheme);
+})();
+
+// Header'daki toggle butonundan tema degistiginde de guncelle
+window.addEventListener('themeChanged', function(e) {
+    var newTheme = e.detail.theme;
+    highlightActiveThemeOption(newTheme);
+});
+</script>
+{% endblock %}

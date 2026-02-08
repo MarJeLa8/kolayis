@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Dusuk Stok Uyarilari - KolayIS{% endblock %}
+{% block page_title %}Dusuk Stok Uyarilari{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2">
+    <a href="/stock/movements"
+        class="inline-flex items-center px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+        Hareketler
+    </a>
+    <a href="/stock/adjust"
+        class="inline-flex items-center px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Stok Ekle
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+    <!-- Filtre: esik degeri -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+        <form method="GET" action="/stock/alerts" class="flex flex-wrap items-center gap-3">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Esik Degeri:</label>
+            <input type="number" name="threshold" min="1" max="100" value="{{ threshold }}"
+                class="w-20 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            <button type="submit"
+                class="inline-flex items-center px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                Uygula
+            </button>
+            <span class="text-xs text-gray-400 dark:text-gray-500">
+                Stoku bu degerin altinda olan urunler listelenir
+            </span>
+        </form>
+    </div>
+
+    <!-- Uyari banner'i -->
+    {% if low_stock_products %}
+    <div class="rounded-lg p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+        <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+            <span class="text-sm font-medium text-amber-800 dark:text-amber-300">
+                {{ low_stock_products|length }} urunun stoku {{ threshold }} ve altinda!
+            </span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Urunler tablosu -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="table-wrapper">
+            <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+                <thead class="bg-gray-50/50 dark:bg-gray-700/50">
+                    <tr>
+                        <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Urun Adi</th>
+                        <th class="px-6 py-3.5 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mevcut Stok</th>
+                        <th class="px-6 py-3.5 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Durum</th>
+                        <th class="px-6 py-3.5 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Birim Fiyat</th>
+                        <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Islem</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                    {% for product in low_stock_products %}
+                    <tr class="table-row hover:bg-gray-50/50 dark:hover:bg-gray-700/50
+                        {% if product.stock == 0 %}bg-red-50/30 dark:bg-red-900/10{% elif product.stock <= 2 %}bg-amber-50/30 dark:bg-amber-900/10{% endif %}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0
+                                    {% if product.stock == 0 %}bg-red-50 dark:bg-red-900/30
+                                    {% elif product.stock <= 2 %}bg-amber-50 dark:bg-amber-900/30
+                                    {% else %}bg-yellow-50 dark:bg-yellow-900/30{% endif %}">
+                                    {% if product.stock == 0 %}
+                                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                    {% else %}
+                                    <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ product.name }}</div>
+                                    {% if product.description %}
+                                    <div class="text-xs text-gray-400 dark:text-gray-500">{{ product.description[:50] }}{% if product.description|length > 50 %}...{% endif %}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span class="text-lg font-bold
+                                {% if product.stock == 0 %}text-red-600 dark:text-red-400
+                                {% elif product.stock <= 2 %}text-amber-600 dark:text-amber-400
+                                {% else %}text-yellow-600 dark:text-yellow-400{% endif %}">
+                                {{ product.stock }}
+                            </span>
+                            <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">{{ product.unit }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            {% if product.stock == 0 %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300">
+                                Stok Tukendi
+                            </span>
+                            {% elif product.stock <= 2 %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
+                                Kritik
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300">
+                                Dusuk
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
+                            {{ "%.2f"|format(product.unit_price) }} TL
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <a href="/stock/adjust?product_id={{ product.id }}"
+                                class="inline-flex items-center px-3 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Stok Ekle
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <div class="w-16 h-16 bg-green-50 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Tum urunlerin stoku yeterli!</p>
+                            <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">{{ threshold }} ve altinda stoku olan urun bulunmuyor.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

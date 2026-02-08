@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - KolayIS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2">
+    <a href="/customers/new"
+        class="inline-flex items-center px-3 py-1.5 bg-brand-600 text-white text-xs font-medium rounded-lg hover:bg-brand-700 transition-colors">
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Musteri
+    </a>
+    <a href="/products/new"
+        class="inline-flex items-center px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Urun
+    </a>
+    <a href="/invoices/new"
+        class="inline-flex items-center px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Fatura
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+    <!-- Stat kartlari - 4 kolon, kompakt -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Toplam Musteri -->
+        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-brand-50 dark:bg-brand-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+                <span class="text-xs text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">+{{ stats.new_this_month }} bu ay</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ stats.total }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Toplam Musteri</p>
+        </div>
+
+        <!-- Toplam Gelir -->
+        <div class="stat-card bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-sm p-4 text-white">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <span class="text-xs text-green-100 font-medium">{{ invoice_stats.total_count }} fatura</span>
+            </div>
+            <p class="text-2xl font-bold">{{ "%.0f"|format(invoice_stats.paid_total) }} TL</p>
+            <p class="text-xs text-green-100 mt-0.5">Toplam Gelir</p>
+        </div>
+
+        <!-- Odenmemis -->
+        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                {% set unpaid_count = invoice_stats.by_status.get('sent', 0) + invoice_stats.by_status.get('draft', 0) %}
+                <span class="text-xs text-red-600 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full">{{ unpaid_count }} fatura</span>
+            </div>
+            <p class="text-2xl font-bold text-red-500">{{ "%.0f"|format(invoice_stats.unpaid_total) }} TL</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Odenmemis Tutar</p>
+        </div>
+
+        <!-- Musteri Durumlari -->
+        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-amber-50 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                {% for status_name, count in stats.by_status.items() %}
+                <div class="flex items-center space-x-1">
+                    <span class="w-2 h-2 rounded-full
+                        {% if status_name == 'active' %}bg-green-500
+                        {% elif status_name == 'inactive' %}bg-gray-400
+                        {% elif status_name == 'lead' %}bg-amber-500
+                        {% else %}bg-blue-500{% endif %}"></span>
+                    <span class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Musteri Dagilimi</p>
+        </div>
+    </div>
+
+    <!-- Grafikler + Son Musteriler -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Aylik Gelir Grafigi -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Aylik Gelir</h3>
+            <div style="height:180px"><canvas id="revenueChart"></canvas></div>
+        </div>
+
+        <!-- Mini grafikler: doughnut + line -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Fatura Durumlari</h3>
+                    <div style="height:160px"><canvas id="statusChart"></canvas></div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Musteri Artisi</h3>
+                    <div style="height:160px"><canvas id="customerChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Son Eklenen Musteriler -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+            <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Son Musteriler</h3>
+                <a href="/customers" class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium">Tumunu Gor</a>
+            </div>
+            <div class="divide-y divide-gray-50 dark:divide-gray-700 flex-1">
+                {% for customer in recent_customers %}
+                <a href="/customers/{{ customer.id }}" class="flex items-center justify-between px-5 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div class="flex items-center space-x-3 min-w-0">
+                        <div class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs font-semibold flex-shrink-0">
+                            {{ customer.company_name[0] }}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ customer.company_name }}</div>
+                            <div class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ customer.contact_name or customer.email or '-' }}</div>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ml-2 flex-shrink-0
+                        {% if customer.status == 'active' %}bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400
+                        {% elif customer.status == 'inactive' %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400
+                        {% elif customer.status == 'lead' %}bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400{% endif %}">
+                        {{ customer.status }}
+                    </span>
+                </a>
+                {% else %}
+                <div class="px-5 py-8 text-center text-gray-400 dark:text-gray-500 text-sm">
+                    Henuz musteri yok.
+                    <a href="/customers/new" class="text-brand-600 dark:text-brand-400 hover:underline ml-1">Ekleyin!</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Son Faturalar + Vadesi Gecen Uyari -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Sol: Son Faturalar (2/3) -->
+        <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+            <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Son Faturalar</h3>
+                <a href="/invoices" class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium">Tumunu Gor</a>
+            </div>
+            {% if recent_invoices %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-50 dark:border-gray-700">
+                            <th class="px-5 py-2.5 text-left font-medium">Fatura No</th>
+                            <th class="px-5 py-2.5 text-left font-medium">Musteri</th>
+                            <th class="px-5 py-2.5 text-left font-medium">Tarih</th>
+                            <th class="px-5 py-2.5 text-left font-medium">Durum</th>
+                            <th class="px-5 py-2.5 text-right font-medium">Toplam</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                        {% for inv in recent_invoices %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer" onclick="window.location='/invoices/{{ inv.id }}'">
+                            <td class="px-5 py-2.5">
+                                <a href="/invoices/{{ inv.id }}" class="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-300">{{ inv.invoice_number }}</a>
+                            </td>
+                            <td class="px-5 py-2.5 text-gray-700 dark:text-gray-300">{{ inv.customer.company_name }}</td>
+                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ inv.invoice_date.strftime('%d.%m.%Y') }}</td>
+                            <td class="px-5 py-2.5">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                    {% if inv.status == 'paid' %}bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400
+                                    {% elif inv.status == 'sent' %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400
+                                    {% elif inv.status == 'draft' %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400
+                                    {% elif inv.status == 'cancelled' %}bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400
+                                    {% endif %}">
+                                    {% if inv.status == 'paid' %}Odendi
+                                    {% elif inv.status == 'sent' %}Gonderildi
+                                    {% elif inv.status == 'draft' %}Taslak
+                                    {% elif inv.status == 'cancelled' %}Iptal
+                                    {% else %}{{ inv.status }}{% endif %}
+                                </span>
+                            </td>
+                            <td class="px-5 py-2.5 text-right font-semibold text-gray-900 dark:text-gray-100">{{ "%.2f"|format(inv.total) }} TL</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="px-5 py-8 text-center text-gray-400 dark:text-gray-500 text-sm flex-1 flex items-center justify-center">
+                Henuz fatura yok.
+                <a href="/invoices/new" class="text-brand-600 dark:text-brand-400 hover:underline ml-1">Olusturun!</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sag: Vadesi Yaklasan / Gecen Uyari (1/3) -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+            <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Vade Uyarilari</h3>
+            </div>
+            <div class="p-5 flex-1">
+                {% if overdue_count > 0 %}
+                <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 mb-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-9 h-9 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-red-700 dark:text-red-400">Vadesi Gecen Faturalar</p>
+                            <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ overdue_count }}</p>
+                            <p class="text-xs text-red-500 dark:text-red-400/80 mt-0.5">{{ "%.2f"|format(overdue_total) }} TL toplam</p>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 mb-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-9 h-9 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-green-700 dark:text-green-400">Vadesi Gecen Fatura Yok</p>
+                            <p class="text-xs text-green-600 dark:text-green-400/80 mt-1">Tum faturalar gunde!</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if upcoming_count > 0 %}
+                <div class="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-9 h-9 bg-amber-100 dark:bg-amber-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-amber-700 dark:text-amber-400">Vadesi Yaklasan</p>
+                            <p class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{{ upcoming_count }}</p>
+                            <p class="text-xs text-amber-500 dark:text-amber-400/80 mt-0.5">7 gun icinde vadesi dolacak</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Son Aktiviteler -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+        <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Son Aktiviteler</h3>
+            <a href="/activities" class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium">Tumunu Gor</a>
+        </div>
+        <div class="divide-y divide-gray-50 dark:divide-gray-700">
+            {% for activity in recent_activities %}
+            <div class="flex items-start space-x-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <!-- Aksiyon ikonu -->
+                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5
+                    {% if activity.action == 'create' %}bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400
+                    {% elif activity.action == 'update' %}bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400
+                    {% elif activity.action == 'delete' %}bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400
+                    {% elif activity.action == 'status_change' %}bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400
+                    {% else %}bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400{% endif %}">
+                    {% if activity.action == 'create' %}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    {% elif activity.action == 'update' %}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    {% elif activity.action == 'delete' %}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    {% elif activity.action == 'status_change' %}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                    {% else %}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-700 dark:text-gray-300 leading-snug">{{ activity.description }}</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 activity-time" data-time="{{ activity.created_at.isoformat() }}">
+                        {{ activity.created_at.strftime('%d.%m.%Y %H:%M') }}
+                    </p>
+                </div>
+                <!-- Varlik tipi etiketi -->
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium flex-shrink-0
+                    {% if activity.entity_type == 'customer' %}bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400
+                    {% elif activity.entity_type == 'invoice' %}bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400
+                    {% elif activity.entity_type == 'product' %}bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400
+                    {% elif activity.entity_type == 'payment' %}bg-cyan-50 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400
+                    {% else %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400{% endif %}">
+                    {% if activity.entity_type == 'customer' %}Musteri
+                    {% elif activity.entity_type == 'invoice' %}Fatura
+                    {% elif activity.entity_type == 'product' %}Urun
+                    {% elif activity.entity_type == 'payment' %}Odeme
+                    {% else %}{{ activity.entity_type }}{% endif %}
+                </span>
+            </div>
+            {% else %}
+            <div class="px-5 py-8 text-center text-gray-400 dark:text-gray-500 text-sm">
+                Henuz aktivite yok. Islem yaptikca burada gorunecek.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+// Dark mode icin grafik renklerini ayarla
+var isDarkMode = document.documentElement.classList.contains('dark');
+var gridColor = isDarkMode ? '#374151' : '#f1f5f9';
+var tickColor = isDarkMode ? '#9ca3af' : undefined;
+var legendColor = isDarkMode ? '#d1d5db' : undefined;
+
+// Aylik Gelir Grafigi
+const revenueData = {{ monthly_revenue | tojson }};
+new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+        labels: revenueData.map(d => d.month),
+        datasets: [{
+            label: 'Gelir (TL)',
+            data: revenueData.map(d => d.revenue),
+            backgroundColor: 'rgba(99, 102, 241, 0.8)',
+            borderRadius: 6,
+            borderSkipped: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: { size: 10 }, color: tickColor, callback: v => v.toLocaleString('tr-TR') + ' TL' } },
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: tickColor } }
+        }
+    }
+});
+
+// Fatura Durum Pasta Grafigi
+const statusData = {{ invoice_stats.by_status | tojson }};
+const statusLabels = { draft: 'Taslak', sent: 'Gonderildi', paid: 'Odendi', cancelled: 'Iptal' };
+const statusColors = { draft: '#9ca3af', sent: '#3b82f6', paid: '#22c55e', cancelled: '#ef4444' };
+new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+        labels: Object.keys(statusData).map(k => statusLabels[k] || k),
+        datasets: [{
+            data: Object.values(statusData),
+            backgroundColor: Object.keys(statusData).map(k => statusColors[k] || '#6366f1'),
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, padding: 6, font: { size: 9 }, color: legendColor } } }
+    }
+});
+
+// Musteri Artis Grafigi
+const customerData = {{ monthly_customers | tojson }};
+new Chart(document.getElementById('customerChart'), {
+    type: 'line',
+    data: {
+        labels: customerData.map(d => d.month),
+        datasets: [{
+            label: 'Yeni Musteri',
+            data: customerData.map(d => d.count),
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 3,
+            pointBackgroundColor: '#6366f1',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: { size: 9 }, color: tickColor, stepSize: 1 } },
+            x: { grid: { display: false }, ticks: { font: { size: 9 }, color: tickColor } }
+        }
+    }
+});
+
+// Turk zamani gosterimi: "5 dakika once", "2 saat once", "dun" vb.
+(function() {
+    function timeAgoTr(dateStr) {
+        var now = new Date();
+        var date = new Date(dateStr);
+        var diff = Math.floor((now - date) / 1000); // saniye cinsinden fark
+
+        if (diff < 60) return 'az once';
+        if (diff < 3600) return Math.floor(diff / 60) + ' dakika once';
+        if (diff < 86400) return Math.floor(diff / 3600) + ' saat once';
+        if (diff < 172800) return 'dun';
+        if (diff < 604800) return Math.floor(diff / 86400) + ' gun once';
+        if (diff < 2592000) return Math.floor(diff / 604800) + ' hafta once';
+        if (diff < 31536000) return Math.floor(diff / 2592000) + ' ay once';
+        return Math.floor(diff / 31536000) + ' yil once';
+    }
+
+    var elements = document.querySelectorAll('.activity-time');
+    for (var i = 0; i < elements.length; i++) {
+        var el = elements[i];
+        var timeStr = el.getAttribute('data-time');
+        if (timeStr) {
+            el.textContent = timeAgoTr(timeStr);
+            el.title = el.getAttribute('data-time');
+        }
+    }
+})();
+</script>
+{% endblock %}

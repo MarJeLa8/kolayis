@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block title %}{{ quotation.quotation_number }} - KolayIS{% endblock %}
+{% block page_title %}{{ quotation.quotation_number }}{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2 flex-wrap gap-y-2">
+    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+        {% if quotation.status == 'accepted' %}bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400
+        {% elif quotation.status == 'sent' %}bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+        {% elif quotation.status == 'draft' %}bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300
+        {% elif quotation.status == 'rejected' %}bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400
+        {% elif quotation.status == 'converted' %}bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400{% endif %}">
+        {% if quotation.status == 'draft' %}Taslak
+        {% elif quotation.status == 'sent' %}Gonderildi
+        {% elif quotation.status == 'accepted' %}Kabul Edildi
+        {% elif quotation.status == 'rejected' %}Reddedildi
+        {% elif quotation.status == 'converted' %}Faturaya Cevrildi{% endif %}
+    </span>
+
+    {% if quotation.status not in ('converted',) %}
+    <a href="/quotations/{{ quotation.id }}/edit"
+        class="px-3 py-1.5 bg-brand-500 text-white text-sm rounded-lg hover:bg-brand-600 transition-colors">Duzenle</a>
+    {% endif %}
+
+    {% if quotation.status == 'draft' %}
+    <form method="POST" action="/quotations/{{ quotation.id }}/status">
+        <input type="hidden" name="status" value="sent">
+        <button type="submit" class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">Gonder</button>
+    </form>
+    {% endif %}
+
+    {% if quotation.status in ('draft', 'sent') %}
+    <form method="POST" action="/quotations/{{ quotation.id }}/status">
+        <input type="hidden" name="status" value="accepted">
+        <button type="submit" class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">Kabul Et</button>
+    </form>
+    <form method="POST" action="/quotations/{{ quotation.id }}/status">
+        <input type="hidden" name="status" value="rejected">
+        <button type="submit" class="px-3 py-1.5 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 transition-colors">Reddet</button>
+    </form>
+    {% endif %}
+
+    {% if quotation.status in ('accepted', 'draft', 'sent') and quotation.status != 'converted' %}
+    <form method="POST" action="/quotations/{{ quotation.id }}/convert"
+        onsubmit="return confirm('Bu teklifi faturaya cevirmek istediginize emin misiniz?')">
+        <button type="submit" class="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors">
+            <span class="inline-flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Faturaya Cevir
+            </span>
+        </button>
+    </form>
+    {% endif %}
+
+    {% if quotation.status != 'converted' %}
+    <form method="POST" action="/quotations/{{ quotation.id }}/delete"
+        onsubmit="return confirm('Bu teklifi silmek istediginize emin misiniz?')">
+        <button type="submit" class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors">Sil</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <a href="/quotations" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Teklifler
+    </a>
+
+    <!-- Gecerliligi dolmus uyari banner'i -->
+    {% if quotation.valid_until and quotation.status in ('draft', 'sent') and quotation.valid_until < today %}
+    {% set expired_days = (today - quotation.valid_until).days %}
+    <div class="rounded-xl border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 p-4 flex items-start gap-3">
+        <div class="flex-shrink-0 mt-0.5">
+            <svg class="w-6 h-6 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-sm font-bold text-amber-800 dark:text-amber-300">Teklif Suresi Dolmus!</h3>
+            <p class="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
+                Bu teklifin gecerliligi <strong>{{ expired_days }} gun</strong> once sona ermistir.
+                (Gecerlilik tarihi: {{ quotation.valid_until.strftime('%d.%m.%Y') }})
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Teklif bilgileri -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Musteri</div>
+                <a href="/customers/{{ quotation.customer.id }}" class="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">{{ quotation.customer.company_name }}</a>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Teklif Tarihi</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ quotation.quotation_date.strftime('%d.%m.%Y') }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Gecerlilik Tarihi</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ quotation.valid_until.strftime('%d.%m.%Y') if quotation.valid_until else '-' }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Olusturulma</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ quotation.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+            </div>
+        </div>
+        {% if quotation.notes %}
+        <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+            <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Not</div>
+            <div class="text-sm text-gray-900 dark:text-gray-100">{{ quotation.notes }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Teklif kalemleri -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+            <thead class="bg-gray-50/50 dark:bg-gray-700/50">
+                <tr>
+                    <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aciklama</th>
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Miktar</th>
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Birim Fiyat</th>
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">KDV</th>
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Toplam</th>
+                    {% if quotation.status not in ('converted',) %}
+                    <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                {% for item in quotation.items %}
+                <tr class="table-row hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
+                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ item.description }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">{{ item.quantity }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">{{ "%.2f"|format(item.unit_price) }} TL</td>
+                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">{{ "%.2f"|format(item.tax_amount) }} TL (%{{ item.tax_rate }})</td>
+                    <td class="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100 text-right">{{ "%.2f"|format(item.line_total + item.tax_amount) }} TL</td>
+                    {% if quotation.status not in ('converted',) %}
+                    <td class="px-6 py-4 text-right">
+                        <form method="POST" action="/quotations/{{ quotation.id }}/items/{{ item.id }}/delete"
+                            onsubmit="return confirm('Bu kalemi silmek istediginize emin misiniz?')">
+                            <button type="submit" class="text-xs text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors">Sil</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500">Teklif kalemi yok</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Toplamlar -->
+        <div class="border-t-2 border-gray-200 dark:border-gray-600 px-6 py-5">
+            <div class="flex justify-end">
+                <div class="w-72 space-y-2.5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500 dark:text-gray-400">Ara Toplam:</span>
+                        <span class="text-gray-900 dark:text-gray-100">{{ "%.2f"|format(quotation.subtotal) }} TL</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500 dark:text-gray-400">KDV Toplam:</span>
+                        <span class="text-gray-900 dark:text-gray-100">{{ "%.2f"|format(quotation.tax_total) }} TL</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold border-t border-gray-200 dark:border-gray-600 pt-2.5">
+                        <span class="dark:text-gray-100">Genel Toplam:</span>
+                        <span class="text-brand-600 dark:text-brand-400">{{ "%.2f"|format(quotation.total) }} TL</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kalem ekleme formu (faturaya cevrilmemis tekliflerde) -->
+    {% if quotation.status not in ('converted',) %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Kalem Ekle</h3>
+        <form method="POST" action="/quotations/{{ quotation.id }}/items" class="grid grid-cols-12 gap-2 items-end">
+            <div class="col-span-4">
+                <label class="block text-xs text-gray-500 dark:text-gray-400">Aciklama</label>
+                <input type="text" name="description" required
+                    class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs text-gray-500 dark:text-gray-400">Miktar</label>
+                <input type="number" name="quantity" step="0.01" min="0.01" required value="1"
+                    class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs text-gray-500 dark:text-gray-400">Birim Fiyat</label>
+                <input type="number" name="unit_price" step="0.01" min="0" required
+                    class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs text-gray-500 dark:text-gray-400">KDV %</label>
+                <select name="tax_rate"
+                    class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    <option value="20">%20</option>
+                    <option value="10">%10</option>
+                    <option value="1">%1</option>
+                    <option value="0">%0</option>
+                </select>
+            </div>
+            <div class="col-span-2">
+                <button type="submit"
+                    class="w-full px-2.5 py-2 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 transition-colors">Ekle</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

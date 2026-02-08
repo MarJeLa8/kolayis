@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Toplu Islem Sonucu - KolayIS{% endblock %}
+{% block page_title %}Toplu Islem Sonucu{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Islem Ozeti Karti -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="flex items-start space-x-4">
+            {% if error_count == 0 %}
+            <!-- Tamamen basarili -->
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            {% elif success_count == 0 %}
+            <!-- Tamamen hatali -->
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            {% else %}
+            <!-- Kismi basari -->
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            {% endif %}
+
+            <div class="flex-1">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                    {{ action_label|default("Toplu Islem") }} Tamamlandi
+                </h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Toplam {{ total_count }} kayit islendi.
+                </p>
+            </div>
+        </div>
+
+        <!-- Istatistik kartlari -->
+        <div class="grid grid-cols-3 gap-4 mt-6">
+            <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4 text-center">
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ total_count }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Toplam Islenen</p>
+            </div>
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+                <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ success_count }}</p>
+                <p class="text-xs text-green-600 dark:text-green-400 mt-1">Basarili</p>
+            </div>
+            <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-center">
+                <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ error_count }}</p>
+                <p class="text-xs text-red-600 dark:text-red-400 mt-1">Hatali</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Basarili Kayitlar -->
+    {% if success_items %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center space-x-2">
+            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path></svg>
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Basarili Kayitlar ({{ success_items|length }})</h3>
+        </div>
+        <div class="divide-y divide-gray-50 dark:divide-gray-700">
+            {% for item in success_items %}
+            <div class="px-6 py-3 flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">{{ item }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Hatali Kayitlar -->
+    {% if error_items %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-red-100 dark:border-red-800/50 overflow-hidden">
+        <div class="px-6 py-4 border-b border-red-100 dark:border-red-800/50 bg-red-50/50 dark:bg-red-900/10 flex items-center space-x-2">
+            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <h3 class="text-sm font-semibold text-red-700 dark:text-red-400">Hatali Kayitlar ({{ error_items|length }})</h3>
+        </div>
+        <div class="divide-y divide-red-50 dark:divide-red-900/20">
+            {% for item in error_items %}
+            <div class="px-6 py-3 flex items-center space-x-3 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-colors">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </span>
+                <span class="text-sm text-red-700 dark:text-red-400">{{ item }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Geri don butonu -->
+    <div class="flex items-center space-x-3">
+        <a href="{{ back_url|default('/dashboard') }}"
+            class="inline-flex items-center px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            {{ back_label|default("Geri Don") }}
+        </a>
+        <a href="/dashboard"
+            class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+            Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

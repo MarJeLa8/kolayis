@@ -1,0 +1,624 @@
+{% extends "base.html" %}
+{% block title %}Takvim - KolayIS{% endblock %}
+{% block page_title %}Takvim{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+    <!-- Takvim Kontrolleri -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <!-- Ay Navigasyonu -->
+            <div class="flex items-center space-x-3">
+                <button id="prevMonth"
+                    class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 id="currentMonthLabel" class="text-lg font-semibold text-gray-900 dark:text-gray-100 min-w-[180px] text-center"></h2>
+                <button id="nextMonth"
+                    class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <button id="todayBtn"
+                    class="ml-2 px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
+                    Bugun
+                </button>
+            </div>
+
+            <!-- Gorunum Secenekleri -->
+            <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
+                <button data-view="month" class="view-tab px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-gray-600 dark:text-gray-300">
+                    Ay
+                </button>
+                <button data-view="week" class="view-tab px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-gray-600 dark:text-gray-300">
+                    Hafta
+                </button>
+                <button data-view="day" class="view-tab px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-gray-600 dark:text-gray-300">
+                    Gun
+                </button>
+            </div>
+        </div>
+
+        <!-- Renk aciklamalari -->
+        <div class="flex flex-wrap gap-4 mt-4 text-xs text-gray-500 dark:text-gray-400">
+            <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                Fatura tarihi
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                Vade tarihi
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                Teklif tarihi
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+                Odeme tarihi
+            </span>
+        </div>
+    </div>
+
+    <!-- Takvim Grid -->
+    <div id="calendarContainer" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <!-- Hafta gun basliklari -->
+        <div id="calendarHeader" class="grid grid-cols-7 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+            <div class="px-2 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pzt</div>
+            <div class="px-2 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sal</div>
+            <div class="px-2 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Car</div>
+            <div class="px-2 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Per</div>
+            <div class="px-2 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cum</div>
+            <div class="px-2 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cmt</div>
+            <div class="px-2 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paz</div>
+        </div>
+        <!-- Takvim gunleri buraya JS ile doldurulacak -->
+        <div id="calendarGrid" class="grid grid-cols-7">
+            <!-- JS ile doldurulur -->
+        </div>
+    </div>
+
+    <!-- Yukleniyor gostergesi -->
+    <div id="calendarLoading" class="hidden text-center py-8">
+        <div class="inline-flex items-center space-x-2 text-gray-400 dark:text-gray-500 text-sm">
+            <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span>Takvim yukleniyor...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Gun Detay Modal -->
+<div id="dayModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <!-- Overlay -->
+        <div id="dayModalOverlay" class="fixed inset-0 bg-black/50 transition-opacity"></div>
+        <!-- Modal icerik -->
+        <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full mx-auto border border-gray-200 dark:border-gray-700 z-10">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                <h3 id="dayModalTitle" class="text-lg font-semibold text-gray-900 dark:text-gray-100"></h3>
+                <button id="dayModalClose" class="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="dayModalContent" class="px-6 py-4 max-h-96 overflow-y-auto">
+                <!-- JS ile doldurulur -->
+            </div>
+            <div class="px-6 py-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                <button id="dayModalCloseBtn"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    Kapat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // --- Durum degiskenleri ---
+    var currentYear, currentMonth; // 0-indexed month (JS Date uyumu icin)
+    var currentView = 'month'; // 'month', 'week', 'day'
+    var currentWeekStart = null; // Hafta gorunumu icin
+    var currentDay = null; // Gun gorunumu icin
+    var eventsCache = {}; // "2026-02" -> [events]
+
+    // Turk ay isimleri
+    var monthNames = [
+        'Ocak', 'Subat', 'Mart', 'Nisan', 'Mayis', 'Haziran',
+        'Temmuz', 'Agustos', 'Eylul', 'Ekim', 'Kasim', 'Aralik'
+    ];
+    var dayNames = ['Pazartesi', 'Sali', 'Carsamba', 'Persembe', 'Cuma', 'Cumartesi', 'Pazar'];
+
+    // Etkinlik tipi renkleri ve etiketleri
+    var eventTypeConfig = {
+        'invoice_date': { color: 'bg-blue-500', textColor: 'text-blue-700 dark:text-blue-300', bgLight: 'bg-blue-50 dark:bg-blue-900/30', label: 'Fatura' },
+        'invoice_due':  { color: 'bg-red-500', textColor: 'text-red-700 dark:text-red-300', bgLight: 'bg-red-50 dark:bg-red-900/30', label: 'Vade' },
+        'quote_date':   { color: 'bg-green-500', textColor: 'text-green-700 dark:text-green-300', bgLight: 'bg-green-50 dark:bg-green-900/30', label: 'Teklif' },
+        'payment_date': { color: 'bg-purple-500', textColor: 'text-purple-700 dark:text-purple-300', bgLight: 'bg-purple-50 dark:bg-purple-900/30', label: 'Odeme' }
+    };
+
+    // --- DOM referanslari ---
+    var calendarGrid = document.getElementById('calendarGrid');
+    var calendarHeader = document.getElementById('calendarHeader');
+    var currentMonthLabel = document.getElementById('currentMonthLabel');
+    var prevMonthBtn = document.getElementById('prevMonth');
+    var nextMonthBtn = document.getElementById('nextMonth');
+    var todayBtn = document.getElementById('todayBtn');
+    var calendarLoading = document.getElementById('calendarLoading');
+    var dayModal = document.getElementById('dayModal');
+    var dayModalOverlay = document.getElementById('dayModalOverlay');
+    var dayModalTitle = document.getElementById('dayModalTitle');
+    var dayModalContent = document.getElementById('dayModalContent');
+    var dayModalCloseBtn = document.getElementById('dayModalCloseBtn');
+    var dayModalClose = document.getElementById('dayModalClose');
+    var viewTabs = document.querySelectorAll('.view-tab');
+
+    // --- Baslangic ---
+    function init() {
+        var today = new Date();
+        currentYear = today.getFullYear();
+        currentMonth = today.getMonth();
+        currentDay = today.getDate();
+        // Haftanin Pazartesi gununun tarihini bul
+        currentWeekStart = getMonday(today);
+
+        setActiveView('month');
+        render();
+        bindEvents();
+    }
+
+    // --- Event binding ---
+    function bindEvents() {
+        prevMonthBtn.addEventListener('click', function() { navigate(-1); });
+        nextMonthBtn.addEventListener('click', function() { navigate(1); });
+        todayBtn.addEventListener('click', goToToday);
+
+        viewTabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                var view = this.getAttribute('data-view');
+                setActiveView(view);
+                render();
+            });
+        });
+
+        // Modal kapat
+        dayModalCloseBtn.addEventListener('click', closeModal);
+        dayModalClose.addEventListener('click', closeModal);
+        dayModalOverlay.addEventListener('click', closeModal);
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !dayModal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+    }
+
+    // --- Gorunum degistirme ---
+    function setActiveView(view) {
+        currentView = view;
+        viewTabs.forEach(function(tab) {
+            if (tab.getAttribute('data-view') === view) {
+                tab.classList.add('bg-white', 'dark:bg-gray-600', 'text-gray-900', 'dark:text-gray-100', 'shadow-sm');
+                tab.classList.remove('text-gray-600', 'dark:text-gray-300');
+            } else {
+                tab.classList.remove('bg-white', 'dark:bg-gray-600', 'text-gray-900', 'dark:text-gray-100', 'shadow-sm');
+                tab.classList.add('text-gray-600', 'dark:text-gray-300');
+            }
+        });
+    }
+
+    // --- Navigasyon ---
+    function navigate(direction) {
+        if (currentView === 'month') {
+            currentMonth += direction;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        } else if (currentView === 'week') {
+            var d = new Date(currentWeekStart);
+            d.setDate(d.getDate() + (direction * 7));
+            currentWeekStart = d;
+            currentYear = d.getFullYear();
+            currentMonth = d.getMonth();
+        } else if (currentView === 'day') {
+            var d = new Date(currentYear, currentMonth, currentDay + direction);
+            currentYear = d.getFullYear();
+            currentMonth = d.getMonth();
+            currentDay = d.getDate();
+        }
+        render();
+    }
+
+    function goToToday() {
+        var today = new Date();
+        currentYear = today.getFullYear();
+        currentMonth = today.getMonth();
+        currentDay = today.getDate();
+        currentWeekStart = getMonday(today);
+        render();
+    }
+
+    // --- Yardimci fonksiyonlar ---
+    function getMonday(d) {
+        var date = new Date(d);
+        var day = date.getDay();
+        var diff = date.getDate() - day + (day === 0 ? -6 : 1);
+        return new Date(date.setDate(diff));
+    }
+
+    function formatDate(year, month, day) {
+        // "2026-02-05" formati
+        return year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    }
+
+    function parseDateStr(dateStr) {
+        // "2026-02-05" -> { year, month (0-indexed), day }
+        var parts = dateStr.split('-');
+        return { year: parseInt(parts[0]), month: parseInt(parts[1]) - 1, day: parseInt(parts[2]) };
+    }
+
+    function formatDateTR(dateStr) {
+        // "2026-02-05" -> "05.02.2026"
+        var p = parseDateStr(dateStr);
+        return String(p.day).padStart(2, '0') + '.' + String(p.month + 1).padStart(2, '0') + '.' + p.year;
+    }
+
+    function getDaysInMonth(year, month) {
+        return new Date(year, month + 1, 0).getDate();
+    }
+
+    function getFirstDayOfMonth(year, month) {
+        // Haftanin kacinci gunu (Pzt=0, Paz=6)
+        var day = new Date(year, month, 1).getDay();
+        return day === 0 ? 6 : day - 1;
+    }
+
+    function isToday(year, month, day) {
+        var today = new Date();
+        return year === today.getFullYear() && month === today.getMonth() && day === today.getDate();
+    }
+
+    // --- API'den etkinlik verisi cek ---
+    function fetchEvents(year, month, callback) {
+        var key = year + '-' + String(month + 1).padStart(2, '0');
+
+        if (eventsCache[key]) {
+            callback(eventsCache[key]);
+            return;
+        }
+
+        calendarLoading.classList.remove('hidden');
+
+        fetch('/api/calendar/events?month=' + key)
+            .then(function(res) {
+                if (!res.ok) throw new Error('API hatasi');
+                return res.json();
+            })
+            .then(function(data) {
+                eventsCache[key] = data.events || [];
+                calendarLoading.classList.add('hidden');
+                callback(eventsCache[key]);
+            })
+            .catch(function(err) {
+                console.error('Takvim verileri yuklenemedi:', err);
+                calendarLoading.classList.add('hidden');
+                callback([]);
+            });
+    }
+
+    // --- Belirli bir gun icin etkinlikleri getir ---
+    function getEventsForDate(events, dateStr) {
+        return events.filter(function(e) { return e.date === dateStr; });
+    }
+
+    // --- Render ---
+    function render() {
+        if (currentView === 'month') {
+            renderMonthView();
+        } else if (currentView === 'week') {
+            renderWeekView();
+        } else if (currentView === 'day') {
+            renderDayView();
+        }
+    }
+
+    // --- Ay gorunumu ---
+    function renderMonthView() {
+        currentMonthLabel.textContent = monthNames[currentMonth] + ' ' + currentYear;
+        // Baslik: 7 sutun (Pzt-Paz)
+        calendarHeader.classList.remove('hidden');
+        calendarHeader.className = 'grid grid-cols-7 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700';
+
+        // Ay icin gerekebilecek aylar (onceki, mevcut, sonraki)
+        var monthsToFetch = [];
+        // Mevcut ay
+        monthsToFetch.push({ year: currentYear, month: currentMonth });
+        // Onceki ay (takvim grid'inde gorunebilir)
+        var prevM = currentMonth - 1, prevY = currentYear;
+        if (prevM < 0) { prevM = 11; prevY--; }
+        monthsToFetch.push({ year: prevY, month: prevM });
+        // Sonraki ay (takvim grid'inde gorunebilir)
+        var nextM = currentMonth + 1, nextY = currentYear;
+        if (nextM > 11) { nextM = 0; nextY++; }
+        monthsToFetch.push({ year: nextY, month: nextM });
+
+        var allEvents = [];
+        var fetched = 0;
+
+        monthsToFetch.forEach(function(m) {
+            fetchEvents(m.year, m.month, function(events) {
+                allEvents = allEvents.concat(events);
+                fetched++;
+                if (fetched === monthsToFetch.length) {
+                    buildMonthGrid(allEvents);
+                }
+            });
+        });
+    }
+
+    function buildMonthGrid(events) {
+        var daysInMonth = getDaysInMonth(currentYear, currentMonth);
+        var firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+
+        // Onceki ay gunleri
+        var prevM = currentMonth - 1, prevY = currentYear;
+        if (prevM < 0) { prevM = 11; prevY--; }
+        var daysInPrevMonth = getDaysInMonth(prevY, prevM);
+
+        // Sonraki ay
+        var nextM = currentMonth + 1, nextY = currentYear;
+        if (nextM > 11) { nextM = 0; nextY++; }
+
+        var cells = [];
+
+        // Onceki ay bos gunleri
+        for (var i = firstDay - 1; i >= 0; i--) {
+            var day = daysInPrevMonth - i;
+            cells.push({ year: prevY, month: prevM, day: day, isCurrentMonth: false });
+        }
+
+        // Mevcut ay gunleri
+        for (var d = 1; d <= daysInMonth; d++) {
+            cells.push({ year: currentYear, month: currentMonth, day: d, isCurrentMonth: true });
+        }
+
+        // Sonraki ay dolgu gunleri (6 satira tamamla)
+        var remaining = 42 - cells.length;
+        // 5 satir yetiyorsa 5 kullan
+        if (cells.length <= 35) {
+            remaining = 35 - cells.length;
+        }
+        for (var d = 1; d <= remaining; d++) {
+            cells.push({ year: nextY, month: nextM, day: d, isCurrentMonth: false });
+        }
+
+        var html = '';
+        for (var i = 0; i < cells.length; i++) {
+            var cell = cells[i];
+            var dateStr = formatDate(cell.year, cell.month, cell.day);
+            var dayEvents = getEventsForDate(events, dateStr);
+            var today = isToday(cell.year, cell.month, cell.day);
+
+            html += '<div class="min-h-[90px] sm:min-h-[110px] border-b border-r border-gray-100 dark:border-gray-700 p-1.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors';
+            if (!cell.isCurrentMonth) html += ' bg-gray-50/50 dark:bg-gray-800/50';
+            html += '" data-date="' + dateStr + '" onclick="window._calendarDayClick(\'' + dateStr + '\')">';
+
+            // Gun numarasi
+            html += '<div class="flex items-center justify-between mb-1">';
+            if (today) {
+                html += '<span class="w-7 h-7 flex items-center justify-center rounded-full bg-brand-600 text-white text-xs font-bold">' + cell.day + '</span>';
+            } else {
+                html += '<span class="text-xs font-medium ' + (cell.isCurrentMonth ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-600') + '">' + cell.day + '</span>';
+            }
+            if (dayEvents.length > 0) {
+                html += '<span class="text-[10px] text-gray-400 dark:text-gray-500">' + dayEvents.length + '</span>';
+            }
+            html += '</div>';
+
+            // Etkinlikler (en fazla 3 goster, geri kalanlari "+X daha" olarak)
+            var maxShow = 3;
+            for (var j = 0; j < Math.min(dayEvents.length, maxShow); j++) {
+                var evt = dayEvents[j];
+                var cfg = eventTypeConfig[evt.type] || eventTypeConfig['invoice_date'];
+                html += '<div class="flex items-center gap-1 mb-0.5 group">';
+                html += '<span class="flex-shrink-0 w-1.5 h-1.5 rounded-full ' + cfg.color + '"></span>';
+                html += '<span class="text-[10px] leading-tight truncate ' + (cell.isCurrentMonth ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-600') + '">' + escapeHtml(evt.title) + '</span>';
+                html += '</div>';
+            }
+            if (dayEvents.length > maxShow) {
+                html += '<div class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">+' + (dayEvents.length - maxShow) + ' daha</div>';
+            }
+
+            html += '</div>';
+        }
+
+        calendarGrid.className = 'grid grid-cols-7';
+        calendarGrid.innerHTML = html;
+    }
+
+    // --- Hafta gorunumu ---
+    function renderWeekView() {
+        // currentWeekStart'tan itibaren 7 gun
+        var weekDays = [];
+        for (var i = 0; i < 7; i++) {
+            var d = new Date(currentWeekStart);
+            d.setDate(d.getDate() + i);
+            weekDays.push(d);
+        }
+
+        var firstDay = weekDays[0];
+        var lastDay = weekDays[6];
+        currentMonthLabel.textContent = firstDay.getDate() + ' ' + monthNames[firstDay.getMonth()] + ' - ' + lastDay.getDate() + ' ' + monthNames[lastDay.getMonth()] + ' ' + lastDay.getFullYear();
+
+        calendarHeader.classList.remove('hidden');
+        // Baslik: gun isimleri ve tarihleri goster
+        var headerHtml = '';
+        for (var i = 0; i < 7; i++) {
+            var d = weekDays[i];
+            var today = isToday(d.getFullYear(), d.getMonth(), d.getDate());
+            headerHtml += '<div class="px-2 py-3 text-center">';
+            headerHtml += '<div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">' + dayNames[i].substring(0, 3) + '</div>';
+            if (today) {
+                headerHtml += '<div class="mt-1 w-7 h-7 mx-auto flex items-center justify-center rounded-full bg-brand-600 text-white text-xs font-bold">' + d.getDate() + '</div>';
+            } else {
+                headerHtml += '<div class="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">' + d.getDate() + '</div>';
+            }
+            headerHtml += '</div>';
+        }
+        calendarHeader.className = 'grid grid-cols-7 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700';
+        calendarHeader.innerHTML = headerHtml;
+
+        // Ilgili aylarin event verilerini cek
+        var monthsNeeded = {};
+        weekDays.forEach(function(d) {
+            var key = d.getFullYear() + '-' + d.getMonth();
+            monthsNeeded[key] = { year: d.getFullYear(), month: d.getMonth() };
+        });
+        var monthsArr = Object.values(monthsNeeded);
+        var allEvents = [];
+        var fetched = 0;
+
+        monthsArr.forEach(function(m) {
+            fetchEvents(m.year, m.month, function(events) {
+                allEvents = allEvents.concat(events);
+                fetched++;
+                if (fetched === monthsArr.length) {
+                    buildWeekGrid(weekDays, allEvents);
+                }
+            });
+        });
+    }
+
+    function buildWeekGrid(weekDays, events) {
+        var html = '';
+        for (var i = 0; i < 7; i++) {
+            var d = weekDays[i];
+            var dateStr = formatDate(d.getFullYear(), d.getMonth(), d.getDate());
+            var dayEvents = getEventsForDate(events, dateStr);
+
+            html += '<div class="min-h-[200px] border-r border-gray-100 dark:border-gray-700 p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"';
+            html += ' data-date="' + dateStr + '" onclick="window._calendarDayClick(\'' + dateStr + '\')">';
+
+            if (dayEvents.length === 0) {
+                html += '<p class="text-xs text-gray-300 dark:text-gray-600 text-center mt-8">Etkinlik yok</p>';
+            } else {
+                for (var j = 0; j < dayEvents.length; j++) {
+                    var evt = dayEvents[j];
+                    var cfg = eventTypeConfig[evt.type] || eventTypeConfig['invoice_date'];
+                    html += '<a href="' + escapeHtml(evt.url || '#') + '" class="block p-2 mb-1.5 rounded-lg ' + cfg.bgLight + ' hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-600 transition-all" onclick="event.stopPropagation()">';
+                    html += '<div class="flex items-center gap-1.5 mb-0.5">';
+                    html += '<span class="w-2 h-2 rounded-full ' + cfg.color + ' flex-shrink-0"></span>';
+                    html += '<span class="text-[10px] font-semibold uppercase ' + cfg.textColor + '">' + cfg.label + '</span>';
+                    html += '</div>';
+                    html += '<p class="text-xs text-gray-700 dark:text-gray-300 truncate">' + escapeHtml(evt.title) + '</p>';
+                    html += '</a>';
+                }
+            }
+            html += '</div>';
+        }
+
+        calendarGrid.className = 'grid grid-cols-7';
+        calendarGrid.innerHTML = html;
+    }
+
+    // --- Gun gorunumu ---
+    function renderDayView() {
+        var dateStr = formatDate(currentYear, currentMonth, currentDay);
+        var dayIndex = new Date(currentYear, currentMonth, currentDay).getDay();
+        dayIndex = dayIndex === 0 ? 6 : dayIndex - 1; // Pzt=0
+        currentMonthLabel.textContent = currentDay + ' ' + monthNames[currentMonth] + ' ' + currentYear + ', ' + dayNames[dayIndex];
+
+        calendarHeader.classList.add('hidden');
+
+        fetchEvents(currentYear, currentMonth, function(events) {
+            buildDayView(dateStr, events);
+        });
+    }
+
+    function buildDayView(dateStr, events) {
+        var dayEvents = getEventsForDate(events, dateStr);
+
+        var html = '';
+        if (dayEvents.length === 0) {
+            html += '<div class="py-16 text-center">';
+            html += '<svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>';
+            html += '<p class="text-gray-400 dark:text-gray-500 text-sm">Bu gunde etkinlik bulunmuyor.</p>';
+            html += '</div>';
+        } else {
+            html += '<div class="p-4 space-y-3">';
+            for (var i = 0; i < dayEvents.length; i++) {
+                var evt = dayEvents[i];
+                var cfg = eventTypeConfig[evt.type] || eventTypeConfig['invoice_date'];
+                html += '<a href="' + escapeHtml(evt.url || '#') + '" class="flex items-center p-4 rounded-xl ' + cfg.bgLight + ' border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group">';
+                html += '<div class="flex-shrink-0 w-10 h-10 rounded-full ' + cfg.color + ' flex items-center justify-center mr-4">';
+                html += '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+                html += '</div>';
+                html += '<div class="flex-1 min-w-0">';
+                html += '<div class="flex items-center gap-2 mb-0.5">';
+                html += '<span class="text-xs font-semibold uppercase ' + cfg.textColor + '">' + cfg.label + '</span>';
+                html += '</div>';
+                html += '<p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">' + escapeHtml(evt.title) + '</p>';
+                html += '</div>';
+                html += '<svg class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
+                html += '</a>';
+            }
+            html += '</div>';
+        }
+
+        calendarGrid.className = '';
+        calendarGrid.innerHTML = html;
+    }
+
+    // --- Modal ---
+    window._calendarDayClick = function(dateStr) {
+        var key = dateStr.substring(0, 7); // "2026-02"
+        var parsed = parseDateStr(dateStr);
+        var dayIndex = new Date(parsed.year, parsed.month, parsed.day).getDay();
+        dayIndex = dayIndex === 0 ? 6 : dayIndex - 1;
+
+        dayModalTitle.textContent = parsed.day + ' ' + monthNames[parsed.month] + ' ' + parsed.year + ', ' + dayNames[dayIndex];
+
+        // Cache'ten event'leri bul
+        var events = eventsCache[key] || [];
+        var dayEvents = getEventsForDate(events, dateStr);
+
+        var html = '';
+        if (dayEvents.length === 0) {
+            html = '<div class="py-8 text-center"><p class="text-gray-400 dark:text-gray-500 text-sm">Bu gunde etkinlik bulunmuyor.</p></div>';
+        } else {
+            html = '<div class="space-y-2">';
+            for (var i = 0; i < dayEvents.length; i++) {
+                var evt = dayEvents[i];
+                var cfg = eventTypeConfig[evt.type] || eventTypeConfig['invoice_date'];
+                html += '<a href="' + escapeHtml(evt.url || '#') + '" class="flex items-center p-3 rounded-lg ' + cfg.bgLight + ' hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-600 transition-all">';
+                html += '<span class="flex-shrink-0 w-3 h-3 rounded-full ' + cfg.color + ' mr-3"></span>';
+                html += '<div class="flex-1 min-w-0">';
+                html += '<span class="text-xs font-semibold uppercase ' + cfg.textColor + '">' + cfg.label + '</span>';
+                html += '<p class="text-sm text-gray-900 dark:text-gray-100 truncate mt-0.5">' + escapeHtml(evt.title) + '</p>';
+                html += '</div>';
+                html += '<svg class="w-4 h-4 text-gray-400 dark:text-gray-500 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
+                html += '</a>';
+            }
+            html += '</div>';
+        }
+
+        dayModalContent.innerHTML = html;
+        dayModal.classList.remove('hidden');
+    };
+
+    function closeModal() {
+        dayModal.classList.add('hidden');
+    }
+
+    // --- Yardimci: HTML escape ---
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+
+    // --- Basla ---
+    init();
+})();
+</script>
+{% endblock %}

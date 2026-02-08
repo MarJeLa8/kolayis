@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KolayIS{% endblock %}</title>
+    <!-- Tema: flash onleme - sayfa renderlanmadan once calistir -->
+    <script>
+        (function() {
+            var theme = localStorage.getItem('kolayis-theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe',
+                            300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1',
+                            600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81',
+                        },
+                        sidebar: { DEFAULT: '#1e1b4b', light: '#2e2a5e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Sidebar transition */
+        .sidebar-link { transition: all 0.15s ease; }
+        .sidebar-link:hover { background: rgba(255,255,255,0.1); }
+        .sidebar-link.active { background: rgba(255,255,255,0.15); border-right: 3px solid #818cf8; }
+        /* Table row hover */
+        .table-row { transition: background 0.1s ease; }
+        /* Stat card hover */
+        .stat-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        /* Smooth scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-track { background: #1f2937; }
+        .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+        /* Mobile sidebar */
+        .sidebar-overlay { display: none; }
+        .sidebar-overlay.active { display: block; }
+        @media (max-width: 1023px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+            .sidebar.open { transform: translateX(0); }
+        }
+        /* Responsive tables */
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        /* Dark mode tema gecis animasyonu */
+        .theme-transition { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+        /* Number input spinner oklarini gizle */
+        .no-spinner::-webkit-outer-spin-button,
+        .no-spinner::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .no-spinner { -moz-appearance: textfield; }
+    </style>
+</head>
+<body id="app" class="bg-gray-100 dark:bg-gray-900 min-h-screen">
+    {% if user %}
+    <div class="flex min-h-screen">
+        <!-- Sidebar overlay (mobil) -->
+        <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 bg-black/50 z-40 lg:hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar w-64 bg-sidebar fixed inset-y-0 left-0 z-50 flex flex-col lg:translate-x-0 lg:z-30">
+            <!-- Logo -->
+            <div class="h-16 flex items-center justify-between px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white tracking-wide">Kolay<span class="text-brand-400">IS</span></span>
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Nav links -->
+            <nav class="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
+                <a href="/dashboard" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'dashboard' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"></path></svg>
+                    Dashboard
+                </a>
+                <a href="/customers" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'customers' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Musteriler
+                </a>
+                <a href="/products" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'products' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    Urunler
+                </a>
+                <a href="/invoices" class="sidebar-link flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'invoices' %}active text-white{% endif %}">
+                    <span class="flex items-center">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Faturalar
+                    </span>
+                    <span id="overdueCountBadge" class="hidden ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full"></span>
+                </a>
+                <a href="/quotations" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'quotations' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    Teklifler
+                </a>
+                <a href="/expenses" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'expenses' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Gelir/Gider
+                </a>
+                <a href="/recurring" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'recurring' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Tekrarlayan
+                </a>
+                <a href="/stock/movements" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'stock' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                    Stok
+                </a>
+                <a href="/calendar" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'calendar' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Takvim
+                </a>
+                <a href="/reports" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'reports' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Raporlar
+                </a>
+                <a href="/activities" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'activities' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Aktiviteler
+                </a>
+
+                <div class="pt-4 mt-4 border-t border-white/10">
+                    <p class="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Veri Aktarimi</p>
+                    <a href="/customers/import" class="sidebar-link flex items-center px-3 py-2 rounded-lg text-sm text-gray-300 {% if active_page == 'customer_import' %}active text-white{% endif %}">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Musteri Import
+                    </a>
+                    <a href="/products/import" class="sidebar-link flex items-center px-3 py-2 rounded-lg text-sm text-gray-300 {% if active_page == 'product_import' %}active text-white{% endif %}">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Urun Import
+                    </a>
+                    <a href="/invoices/import" class="sidebar-link flex items-center px-3 py-2 rounded-lg text-sm text-gray-300 {% if active_page == 'invoice_import' %}active text-white{% endif %}">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Fatura Import
+                    </a>
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-white/10">
+                    <a href="/settings" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'settings' %}active text-white{% endif %}">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Ayarlar
+                    </a>
+                <!-- Ayirici cizgi -->
+                <div class="border-t border-white/10 my-3"></div>
+                <a href="/webhooks" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'webhooks' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    Webhook'lar
+                </a>
+                {% if user.role == 'admin' %}
+                <a href="/admin/users" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'admin' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Kullanicilar
+                </a>
+                {% endif %}
+                </div>
+            </nav>
+
+            <!-- User info -->
+            <div class="p-4 border-t border-white/10">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white text-sm font-medium">
+                        {{ user.full_name[0] }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm text-white truncate">{{ user.full_name }}</div>
+                        <div class="text-xs text-gray-400 truncate">{{ user.email }}</div>
+                    </div>
+                    <a href="/auth/logout" class="text-gray-400 hover:text-red-400 transition-colors" title="Cikis Yap">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 lg:ml-64">
+            <!-- Top bar -->
+            <header class="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-20">
+                <div class="flex items-center space-x-3">
+                    <!-- Hamburger menu (mobil) -->
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">{% block page_title %}{% endblock %}</h2>
+                </div>
+
+                <!-- Global arama cubugu -->
+                <div class="flex-1 max-w-md mx-4 relative" id="globalSearchWrapper">
+                    <!-- Desktop: her zaman gorunen arama input'u -->
+                    <div class="hidden sm:block relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input
+                            type="text"
+                            id="globalSearchInput"
+                            placeholder="Musteri, urun veya fatura ara..."
+                            autocomplete="off"
+                            class="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
+                        />
+                    </div>
+                    <!-- Mobil: arama ikonu + acilir input -->
+                    <div class="sm:hidden">
+                        <button onclick="toggleMobileSearch()" id="mobileSearchToggle" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Ara">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </button>
+                    </div>
+                    <!-- Arama sonuclari dropdown -->
+                    <div id="searchResults" class="hidden absolute left-0 sm:left-0 right-0 sm:right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto" style="min-width: 320px;">
+                        <div id="searchResultsContent"></div>
+                        <div id="searchLoading" class="hidden p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Araniyor...
+                        </div>
+                        <div id="searchEmpty" class="hidden p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Sonuc bulunamadi
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobil arama overlay -->
+                <div id="mobileSearchOverlay" class="hidden fixed inset-x-0 top-0 h-16 bg-white dark:bg-gray-800 z-30 flex items-center px-4 border-b border-gray-200 dark:border-gray-700 sm:hidden">
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input
+                            type="text"
+                            id="mobileSearchInput"
+                            placeholder="Ara..."
+                            autocomplete="off"
+                            class="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        />
+                    </div>
+                    <button onclick="toggleMobileSearch()" class="ml-3 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <!-- Mobil arama sonuclari -->
+                    <div id="mobileSearchResults" class="hidden absolute left-4 right-4 top-14 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
+                        <div id="mobileSearchResultsContent"></div>
+                        <div id="mobileSearchLoading" class="hidden p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Araniyor...
+                        </div>
+                        <div id="mobileSearchEmpty" class="hidden p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Sonuc bulunamadi
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <!-- Tema degistirme butonu -->
+                    <button onclick="toggleTheme()" id="themeToggleBtn" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Tema Degistir">
+                        <!-- Gunes ikonu (dark modda gorunur) -->
+                        <svg id="sunIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <!-- Ay ikonu (light modda gorunur) -->
+                        <svg id="moonIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                    {% block header_actions %}{% endblock %}
+                </div>
+            </header>
+
+            <!-- Flash mesajlar -->
+            {% if flash_message %}
+            <div class="mx-4 lg:mx-8 mt-4">
+                <div class="rounded-lg p-4 text-sm {% if flash_type == 'error' %}bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800{% elif flash_type == 'success' %}bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800{% else %}bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800{% endif %}">
+                    {{ flash_message }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Page content -->
+            <div class="p-4 lg:p-8">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
+
+    // Tema yonetimi
+    function getThemePreference() {
+        var stored = localStorage.getItem('kolayis-theme');
+        if (stored) return stored;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        updateThemeIcons(theme);
+    }
+
+    function updateThemeIcons(theme) {
+        var sunIcon = document.getElementById('sunIcon');
+        var moonIcon = document.getElementById('moonIcon');
+        if (sunIcon && moonIcon) {
+            if (theme === 'dark') {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+        }
+    }
+
+    function toggleTheme() {
+        var isDark = document.documentElement.classList.contains('dark');
+        var newTheme = isDark ? 'light' : 'dark';
+        localStorage.setItem('kolayis-theme', newTheme);
+        applyTheme(newTheme);
+        // Ozel event dispatch et (settings sayfasi dinleyebilsin)
+        window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
+    }
+
+    function setTheme(theme) {
+        if (theme === 'system') {
+            localStorage.removeItem('kolayis-theme');
+            var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            applyTheme(systemTheme);
+        } else {
+            localStorage.setItem('kolayis-theme', theme);
+            applyTheme(theme);
+        }
+    }
+
+    // Sayfa yuklendiginde ikonu guncelle
+    (function() {
+        var theme = getThemePreference();
+        updateThemeIcons(theme);
+    })();
+
+    // Sistem temasini dinle
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('kolayis-theme')) {
+            applyTheme(e.matches ? 'dark' : 'light');
+        }
+    });
+
+    // Vadesi gecen fatura sayisi badge'ini yukle (sidebar icin)
+    (function() {
+        var badge = document.getElementById('overdueCountBadge');
+        if (!badge) return;
+        fetch('/api/overdue-count')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.count && data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            })
+            .catch(function() { badge.classList.add('hidden'); });
+    })();
+
+    // --- Global Arama ---
+    (function() {
+        var searchTimer = null;
+        var desktopInput = document.getElementById('globalSearchInput');
+        var mobileInput = document.getElementById('mobileSearchInput');
+        var searchResults = document.getElementById('searchResults');
+        var searchResultsContent = document.getElementById('searchResultsContent');
+        var searchLoading = document.getElementById('searchLoading');
+        var searchEmpty = document.getElementById('searchEmpty');
+        var mobileSearchResults = document.getElementById('mobileSearchResults');
+        var mobileSearchResultsContent = document.getElementById('mobileSearchResultsContent');
+        var mobileSearchLoading = document.getElementById('mobileSearchLoading');
+        var mobileSearchEmpty = document.getElementById('mobileSearchEmpty');
+
+        // Kategori ikon ve etiketleri
+        var categoryConfig = {
+            customers: {
+                label: 'Musteriler',
+                icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>',
+                color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+            },
+            products: {
+                label: 'Urunler',
+                icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>',
+                color: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30'
+            },
+            invoices: {
+                label: 'Faturalar',
+                icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>',
+                color: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30'
+            }
+        };
+
+        function buildResultsHTML(data) {
+            var html = '';
+            var hasResults = false;
+            var categories = ['customers', 'products', 'invoices'];
+
+            for (var i = 0; i < categories.length; i++) {
+                var key = categories[i];
+                var items = data[key];
+                if (items && items.length > 0) {
+                    hasResults = true;
+                    var cfg = categoryConfig[key];
+                    html += '<div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700">';
+                    html += '<div class="flex items-center space-x-2 ' + cfg.color + ' px-2 py-1 rounded text-xs font-semibold uppercase tracking-wide">';
+                    html += cfg.icon;
+                    html += '<span>' + cfg.label + '</span>';
+                    html += '</div>';
+                    html += '</div>';
+                    for (var j = 0; j < items.length; j++) {
+                        var item = items[j];
+                        html += '<a href="' + item.link + '" class="flex items-center px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-50 dark:border-gray-700/50 last:border-0">';
+                        html += '<div class="flex-1 min-w-0">';
+                        html += '<div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">' + escapeHtml(item.title) + '</div>';
+                        if (item.subtitle) {
+                            html += '<div class="text-xs text-gray-500 dark:text-gray-400 truncate">' + escapeHtml(item.subtitle) + '</div>';
+                        }
+                        html += '</div>';
+                        html += '<svg class="w-4 h-4 text-gray-400 dark:text-gray-500 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
+                        html += '</a>';
+                    }
+                }
+            }
+            return { html: html, hasResults: hasResults };
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function performSearch(query, isMobile) {
+            var resultsEl = isMobile ? mobileSearchResults : searchResults;
+            var contentEl = isMobile ? mobileSearchResultsContent : searchResultsContent;
+            var loadingEl = isMobile ? mobileSearchLoading : searchLoading;
+            var emptyEl = isMobile ? mobileSearchEmpty : searchEmpty;
+
+            if (!query || query.trim().length < 2) {
+                resultsEl.classList.add('hidden');
+                return;
+            }
+
+            // Sonuclari goster, loading baslat
+            resultsEl.classList.remove('hidden');
+            contentEl.innerHTML = '';
+            loadingEl.classList.remove('hidden');
+            emptyEl.classList.add('hidden');
+
+            fetch('/search?q=' + encodeURIComponent(query.trim()))
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    loadingEl.classList.add('hidden');
+                    var result = buildResultsHTML(data);
+                    if (result.hasResults) {
+                        contentEl.innerHTML = result.html;
+                        emptyEl.classList.add('hidden');
+                    } else {
+                        contentEl.innerHTML = '';
+                        emptyEl.classList.remove('hidden');
+                    }
+                })
+                .catch(function() {
+                    loadingEl.classList.add('hidden');
+                    contentEl.innerHTML = '';
+                    emptyEl.classList.remove('hidden');
+                });
+        }
+
+        function debounceSearch(query, isMobile) {
+            if (searchTimer) clearTimeout(searchTimer);
+            searchTimer = setTimeout(function() {
+                performSearch(query, isMobile);
+            }, 300);
+        }
+
+        // Desktop input events
+        if (desktopInput) {
+            desktopInput.addEventListener('input', function() {
+                debounceSearch(this.value, false);
+            });
+            desktopInput.addEventListener('focus', function() {
+                if (this.value.trim().length >= 2) {
+                    searchResults.classList.remove('hidden');
+                }
+            });
+        }
+
+        // Mobil input events
+        if (mobileInput) {
+            mobileInput.addEventListener('input', function() {
+                debounceSearch(this.value, true);
+            });
+        }
+
+        // Disariya tiklaninca dropdown kapat
+        document.addEventListener('click', function(e) {
+            var wrapper = document.getElementById('globalSearchWrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+            var mobileOverlay = document.getElementById('mobileSearchOverlay');
+            if (mobileSearchResults && mobileOverlay && !mobileOverlay.contains(e.target)) {
+                mobileSearchResults.classList.add('hidden');
+            }
+        });
+
+        // ESC tusu ile kapat
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                searchResults.classList.add('hidden');
+                if (mobileSearchResults) mobileSearchResults.classList.add('hidden');
+                var mobileOverlay = document.getElementById('mobileSearchOverlay');
+                if (mobileOverlay && !mobileOverlay.classList.contains('hidden')) {
+                    toggleMobileSearch();
+                }
+            }
+            // Ctrl+K veya Cmd+K ile arama input'una fokusla
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                if (desktopInput && window.innerWidth >= 640) {
+                    desktopInput.focus();
+                } else {
+                    toggleMobileSearch();
+                }
+            }
+        });
+    })();
+
+    // Mobil arama toggle
+    function toggleMobileSearch() {
+        var overlay = document.getElementById('mobileSearchOverlay');
+        var input = document.getElementById('mobileSearchInput');
+        var results = document.getElementById('mobileSearchResults');
+        if (overlay.classList.contains('hidden')) {
+            overlay.classList.remove('hidden');
+            setTimeout(function() { input.focus(); }, 100);
+        } else {
+            overlay.classList.add('hidden');
+            input.value = '';
+            results.classList.add('hidden');
+        }
+    }
+    </script>
+    {% else %}
+    <!-- Auth sayfalari icin: sidebar yok, tam ekran -->
+    {% block auth_content %}{% endblock %}
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Toplu Islem Onayi - KolayIS{% endblock %}
+{% block page_title %}Toplu Islem Onayi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Uyari Banneri -->
+    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4 flex items-start space-x-3">
+        <svg class="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <div>
+            <h3 class="text-sm font-semibold text-amber-800 dark:text-amber-300">Dikkat!</h3>
+            <p class="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
+                {{ warning_message|default("Bu islem geri alinamaz. Devam etmek istediginizden emin olun.") }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Islem Ozeti -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="flex items-center space-x-3 mb-4">
+            {% if action_type == 'delete' %}
+            <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </div>
+            {% elif action_type == 'status_change' %}
+            <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </div>
+            {% elif action_type == 'export' %}
+            <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            {% else %}
+            <div class="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            {% endif %}
+
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {{ action_label|default("Toplu Islem") }}
+                </h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ action_description|default("Secilen kayitlar uzerinde islem yapilacak.") }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Secilen kayit sayisi -->
+        <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4 mb-4">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Secilen kayit sayisi:</span>
+                <span class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ selected_count }}</span>
+            </div>
+            {% if new_status %}
+            <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Yeni durum:</span>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                    {% if new_status == 'paid' %}bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400
+                    {% elif new_status == 'sent' %}bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+                    {% elif new_status == 'draft' %}bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300
+                    {% elif new_status == 'cancelled' %}bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400{% endif %}">
+                    {% if new_status == 'draft' %}Taslak{% elif new_status == 'sent' %}Gonderildi{% elif new_status == 'paid' %}Odendi{% elif new_status == 'cancelled' %}Iptal{% else %}{{ new_status }}{% endif %}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Secilen kayitlarin listesi -->
+        {% if selected_items %}
+        <div class="border border-gray-100 dark:border-gray-700 rounded-lg overflow-hidden mb-4">
+            <div class="px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+                <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Secilen Kayitlar</h4>
+            </div>
+            <div class="max-h-64 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
+                {% for item in selected_items %}
+                <div class="px-4 py-2.5 flex items-center space-x-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        {{ loop.index }}
+                    </span>
+                    <span class="text-gray-700 dark:text-gray-300 truncate">{{ item.label|default(item) }}</span>
+                    {% if item.detail %}
+                    <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto flex-shrink-0">{{ item.detail }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Onay formu -->
+    <form method="POST" action="{{ confirm_url|default('#') }}" id="bulkConfirmForm">
+        <!-- CSRF veya hidden alanlar -->
+        {% if csrf_token %}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% endif %}
+
+        <!-- Secilen ID'ler hidden input olarak -->
+        {% for item_id in selected_ids %}
+        <input type="hidden" name="ids" value="{{ item_id }}">
+        {% endfor %}
+
+        {% if new_status %}
+        <input type="hidden" name="new_status" value="{{ new_status }}">
+        {% endif %}
+
+        <input type="hidden" name="action_type" value="{{ action_type }}">
+        <input type="hidden" name="entity_type" value="{{ entity_type|default('') }}">
+
+        <div class="flex items-center space-x-3">
+            <!-- Onayla butonu -->
+            {% if action_type == 'delete' %}
+            <button type="submit" id="confirmBtn"
+                class="inline-flex items-center px-5 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                Sil ve Onayla
+            </button>
+            {% else %}
+            <button type="submit" id="confirmBtn"
+                class="inline-flex items-center px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Onayla ve Uygula
+            </button>
+            {% endif %}
+
+            <!-- Iptal butonu -->
+            <a href="{{ cancel_url|default('/dashboard') }}"
+                class="inline-flex items-center px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                Iptal
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Cifte tiklama engelleme: form submit olduktan sonra butonu deaktif et
+(function() {
+    var form = document.getElementById('bulkConfirmForm');
+    var btn = document.getElementById('confirmBtn');
+    if (form && btn) {
+        form.addEventListener('submit', function() {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Isleniyor...';
+        });
+    }
+})();
+</script>
+{% endblock %}

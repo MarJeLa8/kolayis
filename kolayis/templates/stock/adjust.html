@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Stok Duzeltme - KolayIS{% endblock %}
+{% block page_title %}Stok Hareketi Ekle{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <a href="/stock/movements" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Stok Hareketleri
+    </a>
+
+    <form method="POST" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Urun secimi -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Urun *</label>
+                <select name="product_id" required id="productSelect"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    <option value="">Urun secin...</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" data-stock="{{ p.stock if p.stock is not none else 'null' }}">
+                        {{ p.name }} (Mevcut stok: {{ p.stock if p.stock is not none else 'Belirsiz' }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Mevcut stok bilgisi -->
+            <div class="md:col-span-2" id="currentStockInfo" style="display: none;">
+                <div class="flex items-center space-x-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
+                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">
+                        Mevcut stok: <span id="currentStockValue" class="font-semibold text-gray-900 dark:text-gray-100">-</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Islem tipi -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Islem Tipi *</label>
+                <select name="movement_type" required id="movementType"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    <option value="in">Stok Girisi (+)</option>
+                    <option value="out">Stok Cikisi (-)</option>
+                    <option value="adjustment">Stok Duzeltme (= yeni deger)</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500" id="typeHint">
+                    Stok girisi: Mevcut stoga eklenir
+                </p>
+            </div>
+
+            <!-- Miktar -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" id="quantityLabel">Miktar *</label>
+                <input type="number" name="quantity" min="1" required id="quantityInput"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    placeholder="Adet girin">
+            </div>
+
+            <!-- Not -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Not</label>
+                <textarea name="notes" rows="2" maxlength="255"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    placeholder="Opsiyonel aciklama..."></textarea>
+            </div>
+        </div>
+
+        <!-- Onizleme -->
+        <div id="previewBox" style="display: none;"
+            class="p-4 rounded-lg border-2 border-dashed border-brand-200 dark:border-brand-800 bg-brand-50/50 dark:bg-brand-900/20">
+            <p class="text-sm font-medium text-brand-700 dark:text-brand-300 mb-1">Onizleme</p>
+            <p class="text-sm text-brand-600 dark:text-brand-400" id="previewText"></p>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <a href="/stock/movements" class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Iptal</a>
+            <button type="submit"
+                class="px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                Kaydet
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+(function() {
+    var productSelect = document.getElementById('productSelect');
+    var movementType = document.getElementById('movementType');
+    var quantityInput = document.getElementById('quantityInput');
+    var currentStockInfo = document.getElementById('currentStockInfo');
+    var currentStockValue = document.getElementById('currentStockValue');
+    var typeHint = document.getElementById('typeHint');
+    var quantityLabel = document.getElementById('quantityLabel');
+    var previewBox = document.getElementById('previewBox');
+    var previewText = document.getElementById('previewText');
+
+    var hints = {
+        'in': 'Stok girisi: Mevcut stoga eklenir',
+        'out': 'Stok cikisi: Mevcut stoktan dusulur',
+        'adjustment': 'Stok duzeltme: Stok miktari girilen degere set edilir'
+    };
+
+    // Urun secildiginde mevcut stoku goster
+    productSelect.addEventListener('change', function() {
+        var selected = this.options[this.selectedIndex];
+        var stock = selected.getAttribute('data-stock');
+        if (this.value && stock !== null) {
+            currentStockInfo.style.display = 'block';
+            currentStockValue.textContent = stock === 'null' ? 'Belirsiz' : stock;
+        } else {
+            currentStockInfo.style.display = 'none';
+        }
+        updatePreview();
+    });
+
+    // Islem tipi degistiginde hint ve label guncelle
+    movementType.addEventListener('change', function() {
+        typeHint.textContent = hints[this.value] || '';
+        if (this.value === 'adjustment') {
+            quantityLabel.textContent = 'Yeni Stok Degeri *';
+            quantityInput.setAttribute('min', '0');
+            quantityInput.placeholder = 'Yeni stok miktari';
+        } else {
+            quantityLabel.textContent = 'Miktar *';
+            quantityInput.setAttribute('min', '1');
+            quantityInput.placeholder = 'Adet girin';
+        }
+        updatePreview();
+    });
+
+    quantityInput.addEventListener('input', updatePreview);
+
+    function updatePreview() {
+        var selected = productSelect.options[productSelect.selectedIndex];
+        var stock = selected ? selected.getAttribute('data-stock') : null;
+        var qty = parseInt(quantityInput.value);
+        var type = movementType.value;
+
+        if (!productSelect.value || !qty || isNaN(qty)) {
+            previewBox.style.display = 'none';
+            return;
+        }
+
+        var currentStock = (stock && stock !== 'null') ? parseInt(stock) : 0;
+        var newStock;
+        var label;
+
+        if (type === 'in') {
+            newStock = currentStock + qty;
+            label = 'Giris: ' + currentStock + ' + ' + qty + ' = ' + newStock;
+        } else if (type === 'out') {
+            newStock = currentStock - qty;
+            label = 'Cikis: ' + currentStock + ' - ' + qty + ' = ' + newStock;
+            if (newStock < 0) {
+                label += ' (Yetersiz stok!)';
+            }
+        } else {
+            newStock = qty;
+            label = 'Duzeltme: ' + currentStock + ' -> ' + newStock;
+        }
+
+        previewText.textContent = label;
+        previewBox.style.display = 'block';
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block title %}Raporlar - KolayIS{% endblock %}
+{% block page_title %}Raporlar{% endblock %}
+
+{% block header_actions %}
+<form method="get" action="/reports" class="flex items-center space-x-2">
+    <input type="date" name="start_date" value="{{ start_date or '' }}"
+        class="px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+        placeholder="Baslangic">
+    <input type="date" name="end_date" value="{{ end_date or '' }}"
+        class="px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+        placeholder="Bitis">
+    <button type="submit"
+        class="inline-flex items-center px-3 py-1.5 bg-brand-600 text-white text-xs font-medium rounded-lg hover:bg-brand-700 transition-colors">
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+        Filtrele
+    </button>
+    {% if start_date or end_date %}
+    <a href="/reports"
+        class="inline-flex items-center px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium">
+        Temizle
+    </a>
+    {% endif %}
+</form>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+    <!-- Stat Kartlari - 4 kolon -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Toplam Gelir -->
+        <div class="stat-card bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl shadow-sm p-4 text-white">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <span class="text-xs text-brand-100 font-medium">Tum Faturalar</span>
+            </div>
+            <p class="text-2xl font-bold">{{ total_revenue|int }} TL</p>
+            <p class="text-xs text-brand-200 mt-0.5">Toplam Gelir</p>
+        </div>
+
+        <!-- Odenmis Toplam -->
+        <div class="stat-card bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-sm p-4 text-white">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <span class="text-xs text-green-100 font-medium">Tahsil Edildi</span>
+            </div>
+            <p class="text-2xl font-bold">{{ paid_total|int }} TL</p>
+            <p class="text-xs text-green-200 mt-0.5">Odenmis Toplam</p>
+        </div>
+
+        <!-- Odenmemis Toplam -->
+        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <span class="text-xs text-red-600 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full">Bekliyor</span>
+            </div>
+            <p class="text-2xl font-bold text-red-500">{{ unpaid_total|int }} TL</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Odenmemis Toplam</p>
+        </div>
+
+        <!-- Toplam Fatura Sayisi -->
+        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-2">
+                <div class="w-9 h-9 bg-amber-50 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <span class="text-xs text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">Toplam</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ total_invoice_count }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Toplam Fatura</p>
+        </div>
+    </div>
+
+    <!-- Grafikler - 2 kolon -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Aylik Gelir Trendi (Bar Chart) -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Aylik Gelir Trendi (Son 12 Ay)</h3>
+            <div style="height:250px"><canvas id="monthlyRevenueChart"></canvas></div>
+        </div>
+
+        <!-- Fatura Durum Dagilimi (Pie Chart) -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Fatura Durum Dagilimi</h3>
+            <div style="height:250px"><canvas id="statusPieChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Tablolar - 2 kolon -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- En Cok Fatura Kesilen Musteriler (Top 5) -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+            <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">En Iyi Musteriler (Top 5)</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">En cok gelir getiren musteriler</p>
+            </div>
+            {% if top_customers %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-50 dark:border-gray-700">
+                            <th class="px-5 py-2.5 text-left font-medium">#</th>
+                            <th class="px-5 py-2.5 text-left font-medium">Musteri</th>
+                            <th class="px-5 py-2.5 text-right font-medium">Fatura Sayisi</th>
+                            <th class="px-5 py-2.5 text-right font-medium">Toplam Gelir</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                        {% for item in top_customers %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ loop.index }}</td>
+                            <td class="px-5 py-2.5">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs font-semibold flex-shrink-0">
+                                        {{ item.company_name[0] }}
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ item.company_name }}</span>
+                                </div>
+                            </td>
+                            <td class="px-5 py-2.5 text-right text-gray-700 dark:text-gray-300">{{ item.invoice_count }}</td>
+                            <td class="px-5 py-2.5 text-right font-semibold text-gray-900 dark:text-gray-100">{{ item.total_revenue|int }} TL</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if avg_revenue_per_customer %}
+            <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30 rounded-b-xl">
+                <p class="text-xs text-gray-500 dark:text-gray-400">Musteri basina ortalama gelir: <span class="font-semibold text-gray-700 dark:text-gray-200">{{ avg_revenue_per_customer|int }} TL</span></p>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="px-5 py-8 text-center text-gray-400 dark:text-gray-500 text-sm flex-1 flex items-center justify-center">
+                Henuz fatura verisi yok.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- En Cok Satilan Urunler (Top 5) -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+            <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">En Iyi Urunler (Top 5)</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">En cok gelir getiren urunler</p>
+            </div>
+            {% if top_products %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-50 dark:border-gray-700">
+                            <th class="px-5 py-2.5 text-left font-medium">#</th>
+                            <th class="px-5 py-2.5 text-left font-medium">Urun / Hizmet</th>
+                            <th class="px-5 py-2.5 text-right font-medium">Satis Adedi</th>
+                            <th class="px-5 py-2.5 text-right font-medium">Toplam Gelir</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                        {% for item in top_products %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-5 py-2.5 text-gray-500 dark:text-gray-400">{{ loop.index }}</td>
+                            <td class="px-5 py-2.5">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex-shrink-0">
+                                        {{ item.description[0] }}
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ item.description }}</span>
+                                </div>
+                            </td>
+                            <td class="px-5 py-2.5 text-right text-gray-700 dark:text-gray-300">{{ item.total_qty|int }}</td>
+                            <td class="px-5 py-2.5 text-right font-semibold text-gray-900 dark:text-gray-100">{{ item.total_revenue|int }} TL</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="px-5 py-8 text-center text-gray-400 dark:text-gray-500 text-sm flex-1 flex items-center justify-center">
+                Henuz urun/hizmet verisi yok.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Dark mode algilama
+var isDark = document.documentElement.classList.contains('dark');
+var gridColor = isDark ? 'rgba(75, 85, 99, 0.3)' : '#f1f5f9';
+var textColor = isDark ? '#9ca3af' : '#6b7280';
+
+// Aylik Gelir Trendi (Bar Chart)
+var monthlyData = {{ monthly_revenue | tojson }};
+new Chart(document.getElementById('monthlyRevenueChart'), {
+    type: 'bar',
+    data: {
+        labels: monthlyData.map(function(d) { return d.month; }),
+        datasets: [{
+            label: 'Gelir (TL)',
+            data: monthlyData.map(function(d) { return d.revenue; }),
+            backgroundColor: isDark ? 'rgba(129, 140, 248, 0.7)' : 'rgba(99, 102, 241, 0.8)',
+            borderRadius: 6,
+            borderSkipped: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return ctx.parsed.y.toLocaleString('tr-TR') + ' TL';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: gridColor },
+                ticks: { font: { size: 10 }, color: textColor, callback: function(v) { return v.toLocaleString('tr-TR') + ' TL'; } }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { font: { size: 10 }, color: textColor }
+            }
+        }
+    }
+});
+
+// Fatura Durum Dagilimi (Pie Chart)
+var statusData = {{ status_distribution | tojson }};
+var statusLabels = { draft: 'Taslak', sent: 'Gonderildi', paid: 'Odendi', cancelled: 'Iptal' };
+var statusColors = { draft: '#9ca3af', sent: '#3b82f6', paid: '#22c55e', cancelled: '#ef4444' };
+var statusKeys = Object.keys(statusData);
+var hasStatusData = statusKeys.length > 0 && statusKeys.some(function(k) { return statusData[k] > 0; });
+
+if (hasStatusData) {
+    new Chart(document.getElementById('statusPieChart'), {
+        type: 'pie',
+        data: {
+            labels: statusKeys.map(function(k) { return statusLabels[k] || k; }),
+            datasets: [{
+                data: statusKeys.map(function(k) { return statusData[k]; }),
+                backgroundColor: statusKeys.map(function(k) { return statusColors[k] || '#6366f1'; }),
+                borderWidth: isDark ? 0 : 2,
+                borderColor: isDark ? 'transparent' : '#ffffff',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 12,
+                        font: { size: 11 },
+                        color: textColor,
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                            var pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                            return ctx.label + ': ' + ctx.parsed + ' fatura (' + pct + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+} else {
+    var ctx = document.getElementById('statusPieChart').getContext('2d');
+    ctx.font = '14px sans-serif';
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'center';
+    ctx.fillText('Henuz fatura verisi yok', ctx.canvas.width / 2, ctx.canvas.height / 2);
+}
+</script>
+{% endblock %}

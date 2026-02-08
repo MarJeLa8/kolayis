@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{% if product %}Urun Duzenle{% else %}Yeni Urun{% endif %} - KolayIS{% endblock %}
+{% block page_title %}{% if product %}Urun Duzenle{% else %}Yeni Urun{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <a href="/products" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Urunler
+    </a>
+
+    <form method="POST" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Urun/Hizmet Adi *</label>
+                <input type="text" name="name" required
+                    value="{{ product.name if product else '' }}"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aciklama</label>
+                <textarea name="description" rows="2"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">{{ product.description if product and product.description else '' }}</textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Birim Fiyat (TL) *</label>
+                <input type="number" name="unit_price" step="0.01" min="0" required
+                    value="{{ product.unit_price if product else '' }}"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Birim</label>
+                <select name="unit"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    {% for u in ['adet', 'saat', 'kg', 'metre', 'paket', 'kutu'] %}
+                    <option value="{{ u }}" {% if product and product.unit == u %}selected{% endif %}>{{ u }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">KDV Orani (%)</label>
+                <div class="mt-1 flex items-center gap-2 flex-wrap">
+                    {% set current_rate = product.tax_rate if product else 20 %}
+                    {% for rate in [0, 1, 8, 10, 20] %}
+                    <button type="button" onclick="document.querySelector('[name=tax_rate]').value={{ rate }};this.parentElement.querySelectorAll('button').forEach(b=>b.className=b.className.replace(/bg-brand-600 text-white/,'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'));this.className=this.className.replace(/bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300/,'bg-brand-600 text-white')"
+                        class="px-3 py-2 rounded-lg text-sm font-medium transition-colors {% if current_rate == rate %}bg-brand-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %} hover:opacity-80">
+                        %{{ rate }}
+                    </button>
+                    {% endfor %}
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" name="tax_rate"
+                        value="{{ current_rate }}" onclick="this.select()" onfocus="this.select()"
+                        class="w-20 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-center">
+                </div>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Stok Miktari</label>
+                <input type="number" name="stock" min="0"
+                    value="{{ product.stock if product and product.stock is not none else '' }}"
+                    placeholder="Bos birakilabilir"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <a href="/products" class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Iptal</a>
+            <button type="submit"
+                class="px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                {% if product %}Kaydet{% else %}Olustur{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

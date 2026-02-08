@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Sunucu Hatasi | KolayIS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe',
+                            300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1',
+                            600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81',
+                        },
+                        sidebar: { DEFAULT: '#1e1b4b', light: '#2e2a5e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        (function() {
+            var theme = localStorage.getItem('kolayis-theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-lg w-full text-center">
+        <!-- Logo -->
+        <div class="mb-8">
+            <span class="text-2xl font-bold text-sidebar dark:text-white tracking-wide">Kolay<span class="text-brand-500">IS</span></span>
+        </div>
+
+        <!-- Error illustration -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 md:p-12">
+            <!-- 500 number -->
+            <div class="relative mb-6">
+                <span class="text-[120px] md:text-[150px] font-extrabold text-red-100 dark:text-red-900/40 leading-none select-none">500</span>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <svg class="w-20 h-20 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Message -->
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3">Sunucu Hatasi</h1>
+            <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                Beklenmeyen bir hata olustu. Teknik ekibimiz bilgilendirildi. Lutfen daha sonra tekrar deneyin.
+            </p>
+
+            <!-- Actions -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="/dashboard"
+                   class="inline-flex items-center px-6 py-3 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors shadow-sm w-full sm:w-auto justify-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"></path>
+                    </svg>
+                    Ana Sayfaya Don
+                </a>
+                <button onclick="location.reload()"
+                        class="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors w-full sm:w-auto justify-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Tekrar Dene
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <p class="mt-6 text-xs text-gray-400 dark:text-gray-500">KolayIS &mdash; Kucuk isletmeler icin basit CRM sistemi</p>
+    </div>
+</body>
+</html>

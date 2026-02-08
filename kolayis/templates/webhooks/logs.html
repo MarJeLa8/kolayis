@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Webhook Loglari - KolayIS{% endblock %}
+{% block page_title %}Webhook Loglari{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Geri ve Webhook Bilgisi -->
+    <div class="flex items-center justify-between">
+        <a href="/webhooks" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            Webhook'lar
+        </a>
+    </div>
+
+    <!-- Webhook Ozet Karti -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+        <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ webhook.url }}</p>
+                {% if webhook.description %}
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ webhook.description }}</p>
+                {% endif %}
+                <div class="flex items-center space-x-2 mt-1">
+                    {% if webhook.is_active %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1"></span>Aktif
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1"></span>Pasif
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Listesi -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Gonderim Gecmisi</h3>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Son 50 webhook gonderimi</p>
+        </div>
+
+        {% if logs %}
+        <div class="divide-y divide-gray-50 dark:divide-gray-700">
+            {% for log in logs %}
+            <div class="px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <div class="flex items-start justify-between">
+                    <!-- Sol: Olay ve Zaman -->
+                    <div class="flex items-start space-x-3 flex-1 min-w-0">
+                        <!-- Basari/Hata ikonu -->
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5
+                            {% if log.success %}bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400
+                            {% else %}bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400{% endif %}">
+                            {% if log.success %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            {% else %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <!-- Olay adi ve HTTP status -->
+                            <div class="flex items-center space-x-2 flex-wrap">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
+                                    {% if 'invoice' in log.event %}bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400
+                                    {% elif 'customer' in log.event %}bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400
+                                    {% elif 'payment' in log.event %}bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400
+                                    {% elif 'product' in log.event %}bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400
+                                    {% else %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400{% endif %}">
+                                    {{ log.event }}
+                                </span>
+                                {% if log.response_status %}
+                                <span class="text-xs font-mono font-medium
+                                    {% if log.response_status >= 200 and log.response_status < 300 %}text-green-600 dark:text-green-400
+                                    {% elif log.response_status >= 400 and log.response_status < 500 %}text-amber-600 dark:text-amber-400
+                                    {% elif log.response_status >= 500 %}text-red-600 dark:text-red-400
+                                    {% else %}text-gray-500 dark:text-gray-400{% endif %}">
+                                    HTTP {{ log.response_status }}
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Hata mesaji -->
+                            {% if log.error_message %}
+                            <p class="text-xs text-red-500 dark:text-red-400 mt-1">{{ log.error_message }}</p>
+                            {% endif %}
+
+                            <!-- Tarih -->
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 log-time" data-time="{{ log.sent_at.isoformat() }}">
+                                {{ log.sent_at.strftime('%d.%m.%Y %H:%M:%S') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Sag: Payload Onizleme Butonu -->
+                    <button type="button" onclick="togglePayload('{{ log.id }}')"
+                        class="ml-3 flex-shrink-0 inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                        Payload
+                    </button>
+                </div>
+
+                <!-- Payload Detay (gizli, tiklaninca acilir) -->
+                <div id="payload-{{ log.id }}" class="hidden mt-3">
+                    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Gonderilen Payload:</p>
+                        <pre class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-all font-mono max-h-40 overflow-y-auto">{{ log.payload }}</pre>
+                    </div>
+                    {% if log.response_body %}
+                    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700 mt-2">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Sunucu Yaniti:</p>
+                        <pre class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-all font-mono max-h-40 overflow-y-auto">{{ log.response_body }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="px-5 py-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            </div>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Bu webhook icin henuz log bulunmuyor.</p>
+            <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">Olaylar tetiklendiginde gonderim sonuclari burada gorunecek.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Payload acma/kapama
+function togglePayload(logId) {
+    var el = document.getElementById('payload-' + logId);
+    if (el) {
+        el.classList.toggle('hidden');
+    }
+}
+
+// Turk zamani gosterimi
+(function() {
+    function timeAgoTr(dateStr) {
+        var now = new Date();
+        var date = new Date(dateStr);
+        var diff = Math.floor((now - date) / 1000);
+
+        if (diff < 60) return 'az once';
+        if (diff < 3600) return Math.floor(diff / 60) + ' dakika once';
+        if (diff < 86400) return Math.floor(diff / 3600) + ' saat once';
+        if (diff < 172800) return 'dun';
+        if (diff < 604800) return Math.floor(diff / 86400) + ' gun once';
+        if (diff < 2592000) return Math.floor(diff / 604800) + ' hafta once';
+        if (diff < 31536000) return Math.floor(diff / 2592000) + ' ay once';
+        return Math.floor(diff / 31536000) + ' yil once';
+    }
+
+    var elements = document.querySelectorAll('.log-time');
+    for (var i = 0; i < elements.length; i++) {
+        var el = elements[i];
+        var timeStr = el.getAttribute('data-time');
+        if (timeStr) {
+            el.textContent = timeAgoTr(timeStr);
+            el.title = el.getAttribute('data-time');
+        }
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Tekrarlayan Fatura Detay - KolayIS{% endblock %}
+{% block page_title %}Tekrarlayan Fatura{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2">
+    <!-- Aktif/Pasif Toggle -->
+    <form method="POST" action="/recurring/{{ recurring.id }}/toggle">
+        {% if recurring.is_active %}
+        <button type="submit" class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50 border border-green-200 dark:border-green-800 transition-colors">
+            <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+            Aktif - Pasif Yap
+        </button>
+        {% else %}
+        <button type="submit" class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 transition-colors">
+            <span class="w-2 h-2 rounded-full bg-gray-400 mr-2"></span>
+            Pasif - Aktif Yap
+        </button>
+        {% endif %}
+    </form>
+
+    <!-- Simdi Fatura Uret -->
+    {% if recurring.is_active %}
+    <form method="POST" action="/recurring/{{ recurring.id }}/generate"
+        onsubmit="return confirm('Bu tekrarlayan faturadan simdi bir fatura olusturulsun mu?')">
+        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Simdi Fatura Uret
+        </button>
+    </form>
+    {% endif %}
+
+    <!-- Sil -->
+    <form method="POST" action="/recurring/{{ recurring.id }}/delete"
+        onsubmit="return confirm('Bu tekrarlayan faturayi silmek istediginize emin misiniz?')">
+        <button type="submit" class="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors">Sil</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <a href="/recurring" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Tekrarlayan Faturalar
+    </a>
+
+    <!-- Durum banner'i -->
+    {% if not recurring.is_active %}
+    <div class="rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-4 flex items-start gap-3">
+        <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+        </svg>
+        <div>
+            <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">Pasif Tekrarlayan Fatura</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Bu tekrarlayan fatura pasif durumda. Otomatik fatura olusturmaz.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if recurring.is_active and recurring.next_run_date <= today %}
+    <div class="rounded-xl border-2 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 p-4 flex items-start gap-3">
+        <svg class="w-6 h-6 text-orange-500 dark:text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+            <h3 class="text-sm font-bold text-orange-800 dark:text-orange-300">Fatura Olusturma Bekliyor</h3>
+            <p class="text-sm text-orange-700 dark:text-orange-400 mt-0.5">
+                Bu tekrarlayan faturanin sonraki olusturma tarihi gecmis. "Simdi Fatura Uret" butonunu kullanabilirsiniz.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Genel bilgiler -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Musteri</div>
+                <a href="/customers/{{ recurring.customer.id }}" class="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">{{ recurring.customer.company_name }}</a>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Siklik</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
+                        {{ recurring.frequency_label }}
+                    </span>
+                </div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Baslangic</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ recurring.start_date.strftime('%d.%m.%Y') }}</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Bitis</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ recurring.end_date.strftime('%d.%m.%Y') if recurring.end_date else 'Surekli' }}</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Sonraki Olusturma</div>
+                <div class="text-sm font-medium {% if recurring.is_active and recurring.next_run_date <= today %}text-orange-600 dark:text-orange-400{% else %}text-gray-900 dark:text-gray-100{% endif %}">
+                    {{ recurring.next_run_date.strftime('%d.%m.%Y') }}
+                </div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Durum</div>
+                {% if recurring.is_active %}
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>Aktif
+                </span>
+                {% else %}
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5"></span>Pasif
+                </span>
+                {% endif %}
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Toplam Uretilen</div>
+                <div class="text-sm font-bold text-brand-600 dark:text-brand-400">{{ recurring.total_generated }} fatura</div>
+            </div>
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Son Uretim</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ recurring.last_generated_at.strftime('%d.%m.%Y %H:%M') if recurring.last_generated_at else 'Henuz uretilmedi' }}
+                </div>
+            </div>
+        </div>
+
+        {% if recurring.notes %}
+        <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+            <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Not</div>
+            <div class="text-sm text-gray-900 dark:text-gray-100">{{ recurring.notes }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Fatura kalemleri -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Fatura Kalemleri</h3>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Her fatura olusturulurken bu kalemler kopyalanir</p>
+        </div>
+        <div class="table-wrapper">
+            <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+                <thead class="bg-gray-50/50 dark:bg-gray-700/50">
+                    <tr>
+                        <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aciklama</th>
+                        <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Miktar</th>
+                        <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Birim Fiyat</th>
+                        <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">KDV</th>
+                        <th class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Satir Toplam</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                    {% set ns = namespace(subtotal=0, tax_total=0) %}
+                    {% for item in recurring.items %}
+                    {% set line_total = item.quantity * item.unit_price %}
+                    {% set tax_amount = line_total * item.tax_rate / 100 %}
+                    {% set ns.subtotal = ns.subtotal + line_total %}
+                    {% set ns.tax_total = ns.tax_total + tax_amount %}
+                    <tr class="table-row hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                            {{ item.description }}
+                            {% if item.product %}
+                            <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">({{ item.product.name }})</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">{{ item.quantity }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">{{ "%.2f"|format(item.unit_price) }} TL</td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">{{ "%.2f"|format(tax_amount) }} TL (%{{ item.tax_rate }})</td>
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100 text-right">{{ "%.2f"|format(line_total + tax_amount) }} TL</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500">Kalem bulunmuyor</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Toplamlar -->
+        {% if recurring.items %}
+        <div class="border-t-2 border-gray-200 dark:border-gray-600 px-6 py-5">
+            <div class="flex justify-end">
+                <div class="w-72 space-y-2.5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500 dark:text-gray-400">Ara Toplam:</span>
+                        <span class="text-gray-900 dark:text-gray-100">{{ "%.2f"|format(ns.subtotal) }} TL</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500 dark:text-gray-400">KDV Toplam:</span>
+                        <span class="text-gray-900 dark:text-gray-100">{{ "%.2f"|format(ns.tax_total) }} TL</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold border-t border-gray-200 dark:border-gray-600 pt-2.5">
+                        <span class="dark:text-gray-100">Genel Toplam:</span>
+                        <span class="text-brand-600 dark:text-brand-400">{{ "%.2f"|format(ns.subtotal + ns.tax_total) }} TL</span>
+                    </div>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 text-right">Her fatura icin tahmini tutar</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Uretim Gecmisi -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Uretim Bilgisi
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-brand-600 dark:text-brand-400">{{ recurring.total_generated }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Toplam Uretilen Fatura</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 text-center">
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ recurring.last_generated_at.strftime('%d.%m.%Y %H:%M') if recurring.last_generated_at else '-' }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Son Uretim Zamani</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 text-center">
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ recurring.created_at.strftime('%d.%m.%Y') }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Olusturulma Tarihi</div>
+            </div>
+        </div>
+
+        {% if recurring.total_generated > 0 %}
+        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <a href="/invoices" class="inline-flex items-center text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium transition-colors">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Olusturulan faturalari goruntule
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_started
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kolayis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kolayis123}
+      POSTGRES_DB: ${POSTGRES_DB:-kolayis_db}
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

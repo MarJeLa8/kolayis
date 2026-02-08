@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Yeni Tekrarlayan Fatura - KolayIS{% endblock %}
+{% block page_title %}Yeni Tekrarlayan Fatura{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <a href="/recurring" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Tekrarlayan Faturalar
+    </a>
+
+    <form method="POST" action="/recurring/new" class="space-y-6">
+        <!-- Temel bilgiler -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-4">
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Fatura Bilgileri</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Musteri *</label>
+                    <select name="customer_id" required
+                        class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                        <option value="">Musteri secin...</option>
+                        {% for c in customers %}
+                        <option value="{{ c.id }}">{{ c.company_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Siklik *</label>
+                    <select name="frequency" required
+                        class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                        <option value="monthly" selected>Aylik</option>
+                        <option value="weekly">Haftalik</option>
+                        <option value="quarterly">3 Aylik</option>
+                        <option value="yearly">Yillik</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Baslangic Tarihi *</label>
+                    <input type="date" name="start_date" required value="{{ today }}"
+                        class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Bitis Tarihi</label>
+                    <input type="date" name="end_date"
+                        class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Bos birakilirsa surekli devam eder</p>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Not</label>
+                <textarea name="notes" rows="2"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                    placeholder="Tekrarlayan fatura notu (opsiyonel)"></textarea>
+            </div>
+        </div>
+
+        <!-- Fatura kalemleri -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-4">
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Fatura Kalemleri</h2>
+            <p class="text-xs text-gray-400 dark:text-gray-500">Bu kalemler her fatura olusturulurken kopyalanacaktir.</p>
+
+            <div id="items-container">
+                <div class="item-row mb-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3">
+                    <div class="grid grid-cols-12 gap-2 items-end">
+                        <div class="col-span-12 sm:col-span-5">
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">Aciklama *</label>
+                            <input type="text" name="item_description[]" required
+                                class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                        </div>
+                        <div class="col-span-4 sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">Miktar *</label>
+                            <input type="number" name="item_quantity[]" step="0.01" min="0.01" required value="1"
+                                class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                        </div>
+                        <div class="col-span-4 sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">Birim Fiyat *</label>
+                            <input type="number" name="item_unit_price[]" step="0.01" min="0" required
+                                class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                        </div>
+                        <div class="col-span-3 sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">KDV %</label>
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" name="item_tax_rate[]" value="20"
+                                onclick="this.select()" onfocus="this.select()"
+                                class="mt-1 w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-center">
+                        </div>
+                        <div class="col-span-1 flex justify-end">
+                            <button type="button" onclick="this.closest('.item-row').remove()"
+                                class="px-2 py-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm transition-colors" title="Kaldir">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 mt-2 kdv-buttons">
+                        <span class="text-xs text-gray-400 dark:text-gray-500 mr-1 self-center">Hizli:</span>
+                        <button type="button" onclick="setKdv(this,0)" class="px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:opacity-80">%0</button>
+                        <button type="button" onclick="setKdv(this,1)" class="px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:opacity-80">%1</button>
+                        <button type="button" onclick="setKdv(this,8)" class="px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:opacity-80">%8</button>
+                        <button type="button" onclick="setKdv(this,10)" class="px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:opacity-80">%10</button>
+                        <button type="button" onclick="setKdv(this,20)" class="px-2 py-1 rounded text-xs font-medium bg-brand-600 text-white hover:opacity-80">%20</button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="addItem()"
+                class="inline-flex items-center text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium transition-colors">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Kalem Ekle
+            </button>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+            <a href="/recurring" class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Iptal</a>
+            <button type="submit"
+                class="px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                Tekrarlayan Fatura Olustur
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function setKdv(btn, val) {
+    var row = btn.closest('.item-row');
+    var input = row.querySelector('input[name="item_tax_rate[]"]');
+    input.value = val;
+    row.querySelectorAll('.kdv-buttons button').forEach(function(b) {
+        b.className = b.className.replace(/bg-brand-600 text-white/, 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300');
+    });
+    btn.className = btn.className.replace(/bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300/, 'bg-brand-600 text-white');
+}
+
+function addItem() {
+    var container = document.getElementById('items-container');
+    var row = document.createElement('div');
+    row.className = 'item-row mb-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3';
+    row.innerHTML = '\
+        <div class="grid grid-cols-12 gap-2 items-end">\
+            <div class="col-span-12 sm:col-span-5">\
+                <input type="text" name="item_description[]" required placeholder="Aciklama"\
+                    class="w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500">\
+            </div>\
+            <div class="col-span-4 sm:col-span-2">\
+                <input type="number" name="item_quantity[]" step="0.01" min="0.01" required value="1"\
+                    class="w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">\
+            </div>\
+            <div class="col-span-4 sm:col-span-2">\
+                <input type="number" name="item_unit_price[]" step="0.01" min="0" required\
+                    class="w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">\
+            </div>\
+            <div class="col-span-3 sm:col-span-2">\
+                <input type="text" inputmode="numeric" pattern="[0-9]*" name="item_tax_rate[]" value="20"\
+                    onclick="this.select()" onfocus="this.select()"\
+                    class="w-full px-2.5 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-center">\
+            </div>\
+            <div class="col-span-1 flex justify-end">\
+                <button type="button" onclick="this.closest(\'.item-row\').remove()"\
+                    class="px-2 py-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm transition-colors" title="Kaldir">\
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>\
+                </button>\
+            </div>\
+        </div>\
+        <div class="flex gap-1 mt-2 kdv-buttons">\
+            <span class="text-xs text-gray-400 dark:text-gray-500 mr-1 self-center">Hizli:</span>\
+            <button type="button" onclick="setKdv(this,0)" class="px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:opacity-80">%0</button>\
+            <button type="button" onclick="setKdv(this,1)" class="px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:opacity-80">%1</button>\
+            <button type="button" onclick="setKdv(this,8)" class="px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:opacity-80">%8</button>\
+            <button type="button" onclick="setKdv(this,10)" class="px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:opacity-80">%10</button>\
+            <button type="button" onclick="setKdv(this,20)" class="px-2 py-1 rounded text-xs font-medium bg-brand-600 text-white hover:opacity-80">%20</button>\
+        </div>';
+    container.appendChild(row);
+}
+</script>
+{% endblock %}

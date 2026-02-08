@@ -1,0 +1,128 @@
+{% extends "portal/base.html" %}
+{% block title %}Faturalarim - {{ customer.company_name }} - KolayIS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Baslik -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Faturalarim</h1>
+            <p class="text-sm text-gray-400 mt-1">Tum faturalariniz ve odeme durumlari</p>
+        </div>
+        <span class="text-sm text-gray-500">Toplam: {{ invoices|length }} fatura</span>
+    </div>
+
+    <!-- Fatura listesi -->
+    {% if invoices %}
+    <!-- Desktop tablo gorunumu -->
+    <div class="hidden md:block bg-portal-card rounded-xl border border-portal-border overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-800">
+            <thead>
+                <tr class="bg-gray-800/50">
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Fatura No</th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Tarih</th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Vade</th>
+                    <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Durum</th>
+                    <th class="px-5 py-3.5 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Tutar</th>
+                    <th class="px-5 py-3.5 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Kalan</th>
+                    <th class="px-5 py-3.5"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800/50">
+                {% for inv in invoices %}
+                <tr class="portal-row">
+                    <td class="px-5 py-4">
+                        <a href="/portal/invoices/{{ inv.id }}" class="text-sm font-medium text-brand-400 hover:text-brand-300 transition-colors">
+                            {{ inv.invoice_number }}
+                        </a>
+                    </td>
+                    <td class="px-5 py-4 text-sm text-gray-300">{{ inv.invoice_date.strftime('%d.%m.%Y') }}</td>
+                    <td class="px-5 py-4 text-sm
+                        {% if inv.due_date and inv.status in ('sent', 'draft') and inv.due_date < today %}text-red-400 font-medium{% else %}text-gray-300{% endif %}">
+                        {{ inv.due_date.strftime('%d.%m.%Y') if inv.due_date else '-' }}
+                        {% if inv.due_date and inv.status in ('sent', 'draft') and inv.due_date < today %}
+                        <span class="text-xs">({{ (today - inv.due_date).days }} gun)</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4">
+                        {% if inv.status == 'paid' %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/40 text-green-300">Odendi</span>
+                        {% elif inv.status == 'cancelled' %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-400">Iptal</span>
+                        {% elif inv.due_date and inv.due_date < today %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-900/40 text-red-300">Vadesi Gecmis</span>
+                        {% elif inv.status == 'sent' %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-900/40 text-blue-300">Gonderildi</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300">Taslak</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-sm font-semibold text-gray-200 text-right">{{ "%.2f"|format(inv.total) }} TL</td>
+                    <td class="px-5 py-4 text-sm text-right
+                        {% if inv.remaining_amount > 0 %}text-red-400 font-semibold{% else %}text-green-400{% endif %}">
+                        {% if inv.status == 'cancelled' %}
+                        -
+                        {% elif inv.remaining_amount > 0 %}
+                        {{ "%.2f"|format(inv.remaining_amount) }} TL
+                        {% else %}
+                        Tamamlandi
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-right">
+                        <a href="/portal/invoices/{{ inv.id }}"
+                            class="text-xs text-gray-500 hover:text-brand-400 transition-colors">
+                            Detay &rarr;
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mobil kart gorunumu -->
+    <div class="md:hidden space-y-3">
+        {% for inv in invoices %}
+        <a href="/portal/invoices/{{ inv.id }}"
+            class="block bg-portal-card rounded-xl border border-portal-border p-4 hover:border-brand-500/30 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-medium text-brand-400">{{ inv.invoice_number }}</span>
+                {% if inv.status == 'paid' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/40 text-green-300">Odendi</span>
+                {% elif inv.status == 'cancelled' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-400">Iptal</span>
+                {% elif inv.due_date and inv.due_date < today %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-900/40 text-red-300">Vadesi Gecmis</span>
+                {% elif inv.status == 'sent' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-900/40 text-blue-300">Gonderildi</span>
+                {% else %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300">Taslak</span>
+                {% endif %}
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="text-xs text-gray-500">
+                    {{ inv.invoice_date.strftime('%d.%m.%Y') }}
+                    {% if inv.due_date %} | Vade: {{ inv.due_date.strftime('%d.%m.%Y') }}{% endif %}
+                </div>
+                <div class="text-right">
+                    <div class="text-sm font-semibold text-gray-200">{{ "%.2f"|format(inv.total) }} TL</div>
+                    {% if inv.status != 'cancelled' and inv.remaining_amount > 0 %}
+                    <div class="text-xs text-red-400">Kalan: {{ "%.2f"|format(inv.remaining_amount) }} TL</div>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Bos durum -->
+    <div class="bg-portal-card rounded-xl border border-portal-border px-5 py-16 text-center">
+        <svg class="w-16 h-16 mx-auto text-gray-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-400 mb-1">Henuz faturaniz yok</h3>
+        <p class="text-sm text-gray-600">Isletmeniz tarafindan kesilen faturalar burada gorunecektir.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

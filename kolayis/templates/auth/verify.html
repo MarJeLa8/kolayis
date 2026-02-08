@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Email Dogrulama - KolayIS{% endblock %}
+
+{% block auth_content %}
+<div class="min-h-screen bg-gradient-to-br from-sidebar via-brand-900 to-brand-800 flex items-center justify-center p-4">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-white tracking-wide">Kolay<span class="text-brand-400">IS</span></h1>
+            <p class="mt-3 text-brand-200">Email adresinizi dogrulayin</p>
+            <p class="mt-1 text-brand-300 text-sm">{{ email }} adresine 6 haneli kod gonderdik</p>
+        </div>
+
+        {% if error %}
+        <div class="bg-red-500/10 border border-red-500/20 text-red-200 rounded-xl p-4 text-sm">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if success %}
+        <div class="bg-green-500/10 border border-green-500/20 text-green-200 rounded-xl p-4 text-sm">
+            {{ success }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/auth/verify" class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 space-y-6 border border-white/10">
+            <input type="hidden" name="email" value="{{ email }}">
+            <div>
+                <label for="code" class="block text-sm font-medium text-brand-200">Dogrulama Kodu</label>
+                <input type="text" name="code" id="code" required maxlength="6" pattern="[0-9]{6}"
+                    class="mt-1 block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent text-center text-2xl tracking-widest"
+                    placeholder="000000" autocomplete="one-time-code">
+            </div>
+            <button type="submit"
+                class="w-full flex justify-center py-3 px-4 rounded-xl text-sm font-semibold text-white bg-brand-500 hover:bg-brand-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors">
+                Dogrula
+            </button>
+        </form>
+
+        <div class="text-center">
+            <form method="POST" action="/auth/resend-code" class="inline">
+                <input type="hidden" name="email" value="{{ email }}">
+                <button type="submit" class="text-brand-400 hover:text-brand-300 text-sm font-medium">
+                    Kodu tekrar gonder
+                </button>
+            </form>
+        </div>
+
+        <p class="text-center text-sm text-brand-300">
+            <a href="/auth/login" class="text-brand-400 hover:text-brand-300 font-medium">Giris sayfasina don</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

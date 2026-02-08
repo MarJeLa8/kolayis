@@ -1,0 +1,184 @@
+{% extends "portal/base.html" %}
+{% block title %}Dashboard - {{ customer.company_name }} - KolayIS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Hosgeldin mesaji -->
+    <div>
+        <h1 class="text-2xl font-bold text-white">Hosgeldiniz, {{ customer.contact_name or customer.company_name }}</h1>
+        <p class="text-sm text-gray-400 mt-1">Fatura ozetiniz ve odeme durumunuz</p>
+    </div>
+
+    <!-- Vadesi gecen fatura uyarisi -->
+    {% if overdue_count > 0 %}
+    <div class="rounded-xl border-2 border-red-700 bg-red-900/20 p-4 flex items-start gap-3">
+        <div class="flex-shrink-0 mt-0.5">
+            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-sm font-bold text-red-300">Vadesi Gecmis Faturalar</h3>
+            <p class="text-sm text-red-400 mt-0.5">
+                <strong>{{ overdue_count }}</strong> adet faturanizin vadesi gecmistir.
+                Toplam: <strong>{{ "%.2f"|format(overdue_amount) }} TL</strong>
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Istatistik kartlari -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Toplam Tutar -->
+        <div class="portal-card bg-portal-card rounded-xl border border-portal-border p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Toplam Fatura</p>
+                    <p class="text-2xl font-bold text-white mt-1">{{ "%.2f"|format(total_amount) }} <span class="text-sm text-gray-400">TL</span></p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Odenen -->
+        <div class="portal-card bg-portal-card rounded-xl border border-portal-border p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Odenen</p>
+                    <p class="text-2xl font-bold text-green-400 mt-1">{{ "%.2f"|format(paid_amount) }} <span class="text-sm text-green-600">TL</span></p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kalan Borc -->
+        <div class="portal-card bg-portal-card rounded-xl border border-portal-border p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Kalan Borc</p>
+                    <p class="text-2xl font-bold {% if remaining_amount > 0 %}text-red-400{% else %}text-gray-400{% endif %} mt-1">{{ "%.2f"|format(remaining_amount) }} <span class="text-sm {% if remaining_amount > 0 %}text-red-600{% else %}text-gray-600{% endif %}">TL</span></p>
+                </div>
+                <div class="w-10 h-10 rounded-lg {% if remaining_amount > 0 %}bg-red-500/10{% else %}bg-gray-500/10{% endif %} flex items-center justify-center">
+                    <svg class="w-5 h-5 {% if remaining_amount > 0 %}text-red-400{% else %}text-gray-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fatura Sayisi -->
+        <div class="portal-card bg-portal-card rounded-xl border border-portal-border p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Bekleyen</p>
+                    <p class="text-2xl font-bold text-yellow-400 mt-1">{{ pending_count }} <span class="text-sm text-gray-500">/ {{ paid_count + pending_count }}</span></p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Odeme ilerleme cubugu -->
+    {% if total_amount > 0 %}
+    {% set paid_percent = ((paid_amount / total_amount) * 100)|round(1) %}
+    {% else %}
+    {% set paid_percent = 0 %}
+    {% endif %}
+    <div class="bg-portal-card rounded-xl border border-portal-border p-5">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-200">Genel Odeme Durumu</h3>
+            <span class="text-sm font-medium
+                {% if paid_percent >= 100 %}text-green-400{% elif paid_percent >= 50 %}text-brand-400{% else %}text-yellow-400{% endif %}">
+                %{{ "%.1f"|format(paid_percent) }}
+            </span>
+        </div>
+        <div class="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+            <div class="h-3 rounded-full transition-all duration-700 ease-out
+                {% if paid_percent >= 100 %}bg-green-500{% elif paid_percent >= 50 %}bg-brand-500{% elif paid_percent > 0 %}bg-yellow-500{% else %}bg-gray-600{% endif %}"
+                style="width: {{ [paid_percent, 100]|min }}%">
+            </div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-500 mt-2">
+            <span>Odenen: {{ "%.2f"|format(paid_amount) }} TL</span>
+            <span>Toplam: {{ "%.2f"|format(total_amount) }} TL</span>
+        </div>
+    </div>
+
+    <!-- Son faturalar -->
+    <div class="bg-portal-card rounded-xl border border-portal-border overflow-hidden">
+        <div class="px-5 py-4 border-b border-portal-border flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-gray-200">Son Faturalar</h3>
+            <a href="/portal/invoices" class="text-xs text-brand-400 hover:text-brand-300 transition-colors">
+                Tumunu Gor &rarr;
+            </a>
+        </div>
+
+        {% if recent_invoices %}
+        <div class="divide-y divide-gray-800">
+            {% for inv in recent_invoices %}
+            <a href="/portal/invoices/{{ inv.id }}"
+                class="portal-row flex items-center justify-between px-5 py-4 hover:bg-gray-800/50 transition-colors">
+                <div class="flex items-center space-x-4">
+                    <!-- Durum ikonu -->
+                    <div class="flex-shrink-0">
+                        {% if inv.status == 'paid' %}
+                        <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        {% elif inv.due_date and inv.status in ('sent', 'draft') and inv.due_date < today %}
+                        <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"></path></svg>
+                        </div>
+                        {% else %}
+                        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-200">{{ inv.invoice_number }}</div>
+                        <div class="text-xs text-gray-500">{{ inv.invoice_date.strftime('%d.%m.%Y') }}{% if inv.due_date %} - Vade: {{ inv.due_date.strftime('%d.%m.%Y') }}{% endif %}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm font-semibold text-gray-200">{{ "%.2f"|format(inv.total) }} TL</div>
+                    <div class="text-xs">
+                        {% if inv.status == 'paid' %}
+                        <span class="text-green-400">Odendi</span>
+                        {% elif inv.status == 'cancelled' %}
+                        <span class="text-gray-500">Iptal</span>
+                        {% elif inv.due_date and inv.due_date < today %}
+                        <span class="text-red-400">Vadesi Gecmis</span>
+                        {% elif inv.status == 'sent' %}
+                        <span class="text-blue-400">Gonderildi</span>
+                        {% else %}
+                        <span class="text-gray-400">Taslak</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="px-5 py-12 text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p class="text-sm text-gray-500">Henuz faturaniz bulunmuyor</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

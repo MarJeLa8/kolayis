@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}{% if expense %}Kayit Duzenle{% else %}Yeni Gelir/Gider{% endif %} - KolayIS{% endblock %}
+{% block page_title %}{% if expense %}Kayit Duzenle{% else %}Yeni Gelir/Gider{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <a href="/expenses" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Gelir-Gider Listesi
+    </a>
+
+    <form method="POST" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-6">
+        <!-- Tip Secimi -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Kayit Tipi *</label>
+            <div class="flex space-x-4">
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="expense_type" value="income"
+                        {% if expense and expense.expense_type == 'income' %}checked{% elif not expense %}checked{% endif %}
+                        class="hidden peer" id="type_income">
+                    <div class="flex items-center justify-center px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 transition-all
+                        peer-checked:border-green-500 peer-checked:bg-green-50 dark:peer-checked:bg-green-900/20 peer-checked:text-green-700 dark:peer-checked:text-green-400">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path></svg>
+                        Gelir
+                    </div>
+                </label>
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="expense_type" value="expense"
+                        {% if expense and expense.expense_type == 'expense' %}checked{% endif %}
+                        class="hidden peer" id="type_expense">
+                    <div class="flex items-center justify-center px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 transition-all
+                        peer-checked:border-red-500 peer-checked:bg-red-50 dark:peer-checked:bg-red-900/20 peer-checked:text-red-700 dark:peer-checked:text-red-400">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path></svg>
+                        Gider
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Aciklama -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aciklama *</label>
+                <input type="text" name="description" required maxlength="255"
+                    value="{{ expense.description if expense else '' }}"
+                    placeholder="Ornek: Ocak ayi kira odemesi"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+
+            <!-- Tutar -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tutar (TL) *</label>
+                <input type="number" name="amount" step="0.01" min="0.01" required
+                    value="{{ expense.amount if expense else '' }}"
+                    placeholder="0.00"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+
+            <!-- Tarih -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tarih *</label>
+                <input type="date" name="expense_date" required
+                    value="{{ expense.expense_date.strftime('%Y-%m-%d') if expense else today }}"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            </div>
+
+            <!-- Kategori -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</label>
+                <select name="category_id"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    <option value="">Kategori Secin (Opsiyonel)</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if expense and expense.category_id == cat.id %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Odeme Yontemi -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Odeme Yontemi</label>
+                <select name="payment_method"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    <option value="">Secin (Opsiyonel)</option>
+                    <option value="nakit" {% if expense and expense.payment_method == 'nakit' %}selected{% endif %}>Nakit</option>
+                    <option value="banka" {% if expense and expense.payment_method == 'banka' %}selected{% endif %}>Banka Transferi</option>
+                    <option value="kredi_karti" {% if expense and expense.payment_method == 'kredi_karti' %}selected{% endif %}>Kredi Karti</option>
+                </select>
+            </div>
+
+            <!-- Notlar -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notlar</label>
+                <textarea name="notes" rows="3"
+                    placeholder="Ek bilgi veya aciklama (opsiyonel)"
+                    class="mt-1 w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">{{ expense.notes if expense and expense.notes else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <a href="/expenses" class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Iptal</a>
+            <button type="submit"
+                class="px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                {% if expense %}Kaydet{% else %}Olustur{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
