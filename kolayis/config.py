@@ -38,6 +38,15 @@ class Settings(BaseSettings):
     TURNSTILE_SITE_KEY: str = ""
     TURNSTILE_SECRET_KEY: str = ""
 
+    # AI Asistan (Claude API)
+    ANTHROPIC_API_KEY: str = ""
+    AI_MODEL: str = "claude-sonnet-4-5-20250929"
+
+    # WhatsApp Business API (Meta Cloud API)
+    WHATSAPP_API_TOKEN: str = ""
+    WHATSAPP_PHONE_NUMBER_ID: str = ""
+    WHATSAPP_VERIFY_TOKEN: str = "kolayis-webhook-verify"
+
 
 # Tek bir settings nesnesi olustur, her yerde bunu kullan
 settings = Settings()

@@ -40,6 +40,11 @@ from kolayis.services import calendar_service
 from kolayis.services import einvoice as einvoice_service
 from kolayis.services import import_service
 from kolayis.services import roles as roles_service
+from kolayis.services import notification as notification_service
+from kolayis.services import deal as deal_service
+from kolayis.services import ai_assistant
+from kolayis.services import whatsapp as whatsapp_service
+from kolayis.services import custom_field as custom_field_service
 from kolayis.services import totp as totp_service
 from kolayis.schemas.quotation import QuotationCreate, QuotationUpdate
 from kolayis.schemas.expense import ExpenseCreate, ExpenseCategoryCreate, ExpenseUpdate
@@ -91,8 +96,10 @@ TURNSTILE_SECRET_KEY = app_settings.TURNSTILE_SECRET_KEY
 
 def verify_turnstile(token: str) -> bool:
     """Cloudflare Turnstile token'ini dogrula."""
-    if not TURNSTILE_SECRET_KEY:
+    if not TURNSTILE_SECRET_KEY or not TURNSTILE_SITE_KEY:
         return True  # Key yoksa dogrulamayi atla (gelistirme ortami)
+    if not token:
+        return True  # Token bossa da atla (widget yuklenemedi)
     try:
         resp = httpx.post(
             "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -147,7 +154,12 @@ async def login_submit(
 
     # JWT token olustur ve cookie'ye kaydet
     token = create_access_token(user.id)
-    response = RedirectResponse(url="/dashboard", status_code=303)
+
+    # Ilk giris mi? (hic musteri yoksa onboarding'e yonlendir)
+    _, cust_count = customer_service.get_customers(db, user.id, size=1)
+    redirect_url = "/onboarding" if cust_count == 0 else "/dashboard"
+
+    response = RedirectResponse(url=redirect_url, status_code=303)
     response.set_cookie(key="access_token", value=token, httponly=True)
     return response
 
@@ -532,6 +544,14 @@ def customer_create(
         status=status,
     )
     customer = customer_service.create_customer(db, user.id, data)
+    notification_service.create_notification(
+        db, user.id, "customer_new",
+        "Yeni musteri eklendi!",
+        f"{company_name} basariyla musteri listenize eklendi.",
+        entity_type="customer", entity_id=customer.id,
+        link=f"/customers/{customer.id}",
+    )
+    db.commit()
     return RedirectResponse(url=f"/customers/{customer.id}", status_code=303)
 
 
@@ -696,6 +716,7 @@ def customer_detail(
 
     customer = customer_service.get_customer(db, customer_id, user.id)
     notes = note_service.get_notes(db, customer_id, user.id)
+    custom_fields = custom_field_service.get_fields_with_values(db, user.id, "customer", customer_id)
 
     return templates.TemplateResponse("customers/detail.html", {
         "request": request,
@@ -703,6 +724,7 @@ def customer_detail(
         "active_page": "customers",
         "customer": customer,
         "notes": notes,
+        "custom_fields": custom_fields,
     })
 
 
@@ -718,12 +740,14 @@ def customer_edit(
         return RedirectResponse(url="/auth/login", status_code=303)
 
     customer = customer_service.get_customer(db, customer_id, user.id)
+    custom_fields = custom_field_service.get_fields_with_values(db, user.id, "customer", customer_id)
 
     return templates.TemplateResponse("customers/form.html", {
         "request": request,
         "user": user,
         "active_page": "customers",
         "customer": customer,
+        "custom_fields": custom_fields,
     })
 
 
@@ -755,6 +779,25 @@ def customer_update(
         status=status,
     )
     customer_service.update_customer(db, customer_id, user.id, data)
+    return RedirectResponse(url=f"/customers/{customer_id}", status_code=303)
+
+
+@router.post("/customers/{customer_id}/custom-fields")
+async def customer_save_custom_fields(
+    customer_id: uuid.UUID,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Musteri ozel alan degerlerini kaydet."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    form_data = await request.form()
+    cf_values = {k.replace("cf_", ""): v for k, v in form_data.items() if k.startswith("cf_")}
+    if cf_values:
+        custom_field_service.save_values(db, customer_id, cf_values)
+
     return RedirectResponse(url=f"/customers/{customer_id}", status_code=303)
 
 
@@ -1552,7 +1595,28 @@ def payment_create(
     )
 
     try:
-        payment_service.create_payment(db, invoice_id, user.id, data)
+        payment = payment_service.create_payment(db, invoice_id, user.id, data)
+        # Odeme bildirimi
+        from kolayis.models.invoice import Invoice
+        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+        if invoice:
+            notification_service.create_notification(
+                db, user.id, "payment_received",
+                "Odeme alindi!",
+                f"{invoice.invoice_number} faturasina {amount} TL odeme kaydedildi.",
+                entity_type="invoice", entity_id=invoice_id,
+                link=f"/invoices/{invoice_id}",
+            )
+            # Fatura tamamen odendiyse ek bildirim
+            if invoice.status == "paid":
+                notification_service.create_notification(
+                    db, user.id, "invoice_paid",
+                    "Fatura tamamen odendi!",
+                    f"{invoice.invoice_number} faturasi tamamen odendi. Toplam: {invoice.total:.2f} TL",
+                    entity_type="invoice", entity_id=invoice_id,
+                    link=f"/invoices/{invoice_id}",
+                )
+            db.commit()
     except HTTPException:
         # Validation hatasi durumunda fatura detay sayfasina don
         pass
@@ -2059,6 +2123,18 @@ def stock_adjust_submit(request: Request, db: Annotated[Session, Depends(get_db)
         return RedirectResponse(url="/auth/login", status_code=303)
     stock_service.add_stock_movement(db, user.id, product_id, movement_type, quantity, reference_type="manual", notes=notes or None)
     activity_service.log_activity(db, user.id, "stock", "adjust", str(product_id), f"Stok hareketi: {movement_type} {quantity}")
+    # Dusuk stok kontrolu - stok 5'in altina dustuyse bildirim
+    from kolayis.models.product import Product
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product and product.stock is not None and product.stock <= 5:
+        notification_service.create_notification(
+            db, user.id, "stock_low",
+            "Stok uyarisi!",
+            f"{product.name} urununde stok {product.stock} adet kaldi.",
+            entity_type="product", entity_id=product_id,
+            link=f"/stock/alerts",
+        )
+        db.commit()
     return RedirectResponse(url="/stock/movements", status_code=303)
 
 @router.get("/stock/alerts", response_class=HTMLResponse)
@@ -2364,3 +2440,341 @@ def two_factor_disable(request: Request, db: Annotated[Session, Depends(get_db)]
         user.totp_secret = None
         db.commit()
     return RedirectResponse(url="/settings", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# Bildirim Merkezi Sayfasi
+# ---------------------------------------------------------------------------
+@router.get("/notifications", response_class=HTMLResponse)
+def notifications_page(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    page: int = Query(1, ge=1),
+    filter: str = Query("all"),
+):
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    size = 20
+    unread_only = filter == "unread"
+    offset = (page - 1) * size
+
+    notifications = notification_service.get_notifications(
+        db, user.id, unread_only=unread_only, limit=size, offset=offset
+    )
+    unread_count = notification_service.get_unread_count(db, user.id)
+
+    # Toplam bildirim sayisi (filtre'ye gore)
+    if unread_only:
+        total = unread_count
+    else:
+        total = len(notification_service.get_notifications(db, user.id, limit=10000))
+
+    total_pages = max(1, (total + size - 1) // size)
+
+    return templates.TemplateResponse("notifications/list.html", {
+        "request": request,
+        "user": user,
+        "active_page": "notifications",
+        "notifications": notifications,
+        "unread_count": unread_count,
+        "total": total,
+        "page": page,
+        "total_pages": total_pages,
+        "current_filter": filter,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Satis Pipeline (Kanban Board) Sayfalari
+# ---------------------------------------------------------------------------
+@router.get("/pipeline", response_class=HTMLResponse)
+def pipeline_kanban(request: Request, db: Annotated[Session, Depends(get_db)]):
+    """Kanban board gorunumu."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    stages = deal_service.ensure_default_stages(db, user.id)
+    # Her asamadaki deal'lari yukle
+    for stage in stages:
+        stage.deals = deal_service.get_deals(db, user.id, stage_id=stage.id)
+
+    stats = deal_service.get_pipeline_stats(db, user.id)
+    customers, _ = customer_service.get_customers(db, user.id)
+
+    return templates.TemplateResponse("pipeline/kanban.html", {
+        "request": request, "user": user, "active_page": "pipeline",
+        "stages": stages, "stats": stats, "customers": customers,
+    })
+
+
+@router.post("/pipeline/new")
+def pipeline_deal_create(
+    request: Request, db: Annotated[Session, Depends(get_db)],
+    title: str = Form(...), stage_id: uuid.UUID = Form(...),
+    customer_id: str = Form(""), value: str = Form("0"),
+    probability: int = Form(50), expected_close_date: str = Form(""),
+    priority: str = Form("medium"), notes: str = Form(""),
+):
+    """Yeni satis firsati olustur."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    from decimal import Decimal
+    from datetime import date
+
+    deal = deal_service.create_deal(
+        db, user.id,
+        title=title,
+        stage_id=stage_id,
+        customer_id=uuid.UUID(customer_id) if customer_id else None,
+        value=Decimal(value) if value else Decimal("0"),
+        probability=probability,
+        expected_close_date=date.fromisoformat(expected_close_date) if expected_close_date else None,
+        notes=notes or None,
+        priority=priority,
+    )
+    activity_service.log_activity(db, user.id, "deal", "create", str(deal.id), f"Satis firsati olusturuldu: {title}")
+    return RedirectResponse(url="/pipeline", status_code=303)
+
+
+@router.get("/pipeline/{deal_id}/edit", response_class=HTMLResponse)
+def pipeline_deal_edit_form(deal_id: uuid.UUID, request: Request, db: Annotated[Session, Depends(get_db)]):
+    """Firsat duzenleme formu."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    deal = deal_service.get_deal(db, deal_id, user.id)
+    if not deal:
+        return RedirectResponse(url="/pipeline", status_code=303)
+    stages = deal_service.get_stages(db, user.id)
+    customers, _ = customer_service.get_customers(db, user.id)
+
+    return templates.TemplateResponse("pipeline/edit.html", {
+        "request": request, "user": user, "active_page": "pipeline",
+        "deal": deal, "stages": stages, "customers": customers,
+    })
+
+
+@router.post("/pipeline/{deal_id}/edit")
+def pipeline_deal_edit_submit(
+    deal_id: uuid.UUID, request: Request, db: Annotated[Session, Depends(get_db)],
+    title: str = Form(...), stage_id: uuid.UUID = Form(...),
+    customer_id: str = Form(""), value: str = Form("0"),
+    probability: int = Form(50), expected_close_date: str = Form(""),
+    priority: str = Form("medium"), notes: str = Form(""),
+):
+    """Firsat guncelle."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    from decimal import Decimal
+    from datetime import date
+
+    deal_service.update_deal(
+        db, deal_id, user.id,
+        title=title,
+        stage_id=stage_id,
+        customer_id=uuid.UUID(customer_id) if customer_id else None,
+        value=Decimal(value) if value else Decimal("0"),
+        probability=probability,
+        expected_close_date=date.fromisoformat(expected_close_date) if expected_close_date else None,
+        notes=notes or None,
+        priority=priority,
+    )
+    return RedirectResponse(url="/pipeline", status_code=303)
+
+
+@router.get("/pipeline/{deal_id}/delete")
+def pipeline_deal_delete(deal_id: uuid.UUID, request: Request, db: Annotated[Session, Depends(get_db)]):
+    """Firsat sil."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    deal_service.delete_deal(db, deal_id, user.id)
+    return RedirectResponse(url="/pipeline", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# AI Asistan Sayfasi
+# ---------------------------------------------------------------------------
+@router.get("/ai-assistant", response_class=HTMLResponse)
+def ai_assistant_page(request: Request, db: Annotated[Session, Depends(get_db)]):
+    """AI Asistan sayfasi."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    insights = ai_assistant.get_dashboard_insights(db, user.id)
+
+    return templates.TemplateResponse("ai/assistant.html", {
+        "request": request, "user": user, "active_page": "ai",
+        "insights": insights,
+    })
+
+
+# ---------------------------------------------------------------------------
+# WhatsApp Mesajlari
+# ---------------------------------------------------------------------------
+@router.get("/whatsapp", response_class=HTMLResponse)
+def whatsapp_messages_page(request: Request, db: Annotated[Session, Depends(get_db)]):
+    """WhatsApp mesaj gecmisi sayfasi."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    messages = whatsapp_service.get_message_history(db, user.id)
+    customers, _ = customer_service.get_customers(db, user.id, size=9999)
+    invoices, _ = invoice_service.get_invoices(db, user.id, size=9999)
+
+    return templates.TemplateResponse("whatsapp/messages.html", {
+        "request": request, "user": user, "active_page": "whatsapp",
+        "messages": messages, "customers": customers, "invoices": invoices,
+    })
+
+
+@router.post("/whatsapp/send")
+def whatsapp_send(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    customer_id: uuid.UUID = Form(...),
+    message_type: str = Form("custom"),
+    invoice_id: uuid.UUID | None = Form(None),
+    message_text: str | None = Form(None),
+):
+    """WhatsApp mesaji gonder."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    customer = customer_service.get_customer(db, customer_id, user.id)
+    if not customer:
+        return RedirectResponse(url="/whatsapp", status_code=303)
+
+    if message_type == "invoice_send" and invoice_id:
+        invoice = invoice_service.get_invoice(db, invoice_id, user.id)
+        if invoice:
+            whatsapp_service.send_invoice(db, user.id, invoice, customer)
+    elif message_type == "payment_reminder" and invoice_id:
+        invoice = invoice_service.get_invoice(db, invoice_id, user.id)
+        if invoice:
+            whatsapp_service.send_payment_reminder(db, user.id, invoice, customer)
+    elif message_text:
+        whatsapp_service.send_custom_message(db, user.id, customer, message_text)
+
+    return RedirectResponse(url="/whatsapp", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# Ozel Alanlar (Custom Fields)
+# ---------------------------------------------------------------------------
+@router.get("/custom-fields", response_class=HTMLResponse)
+def custom_fields_page(request: Request, db: Annotated[Session, Depends(get_db)]):
+    """Ozel alan yonetim sayfasi."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    fields = custom_field_service.get_definitions(db, user.id)
+    entity_types = [
+        {"key": "all", "label": "Tumunu Goster"},
+        {"key": "customer", "label": "Musteri"},
+        {"key": "invoice", "label": "Fatura"},
+        {"key": "product", "label": "Urun"},
+        {"key": "deal", "label": "Firsat"},
+    ]
+
+    return templates.TemplateResponse("custom_fields/manage.html", {
+        "request": request, "user": user, "active_page": "custom_fields",
+        "fields": fields, "entity_types": entity_types,
+    })
+
+
+@router.post("/custom-fields/new")
+def custom_fields_create(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    entity_type: str = Form(...),
+    field_name: str = Form(...),
+    field_type: str = Form(...),
+    options_text: str | None = Form(None),
+    is_required: str | None = Form(None),
+):
+    """Yeni ozel alan olustur."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    options = None
+    if field_type == "select" and options_text:
+        options = [o.strip() for o in options_text.strip().split("\n") if o.strip()]
+
+    custom_field_service.create_definition(
+        db, user.id,
+        entity_type=entity_type,
+        field_name=field_name,
+        field_type=field_type,
+        options=options,
+        is_required=bool(is_required),
+    )
+
+    return RedirectResponse(url="/custom-fields", status_code=303)
+
+
+@router.get("/custom-fields/{field_id}/delete")
+def custom_fields_delete(
+    request: Request, field_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Ozel alani sil."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    custom_field_service.delete_definition(db, user.id, field_id)
+    return RedirectResponse(url="/custom-fields", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# Onboarding (Ilk Kullanim Wizard)
+# ---------------------------------------------------------------------------
+@router.get("/onboarding", response_class=HTMLResponse)
+def onboarding_page(request: Request, db: Annotated[Session, Depends(get_db)]):
+    """Onboarding wizard sayfasi."""
+    user = require_login(request, db)
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    return templates.TemplateResponse("onboarding.html", {
+        "request": request, "user": user, "active_page": "onboarding",
+    })
+
+
+@router.post("/onboarding/add-customer")
+async def onboarding_add_customer(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Onboarding sirasinda ilk musteriyi ekle."""
+    user = require_login(request, db)
+    if not user:
+        return JSONResponse({"error": "auth"}, status_code=401)
+
+    form_data = await request.form()
+    company_name = form_data.get("company_name", "").strip()
+    if not company_name:
+        return JSONResponse({"error": "name required"}, status_code=400)
+
+    data = CustomerCreate(
+        company_name=company_name,
+        email=form_data.get("email", "").strip() or None,
+        phone=form_data.get("phone", "").strip() or None,
+    )
+    customer_service.create_customer(db, user.id, data)
+    return JSONResponse({"ok": True})

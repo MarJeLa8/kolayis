@@ -35,9 +35,9 @@
                     placeholder="En az 8 karakter">
             </div>
 
+            {% if turnstile_site_key %}
             <!-- Ben robot degilim -->
             <div id="captcha-box" onclick="startVerification()" style="border:1px solid rgba(255,255,255,0.2); border-radius:12px; background:rgba(255,255,255,0.05); padding:14px 16px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:all 0.2s;">
-                <!-- Bos checkbox -->
                 <div id="checkbox" style="width:24px; height:24px; border:2px solid rgba(255,255,255,0.3); border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.3s;"></div>
                 <span id="captcha-text" style="color:#93c5fd; font-size:14px;">Ben robot degilim</span>
             </div>
@@ -48,6 +48,12 @@
                 class="w-full flex justify-center py-3 px-4 rounded-xl text-sm font-semibold text-white bg-brand-500 transition-colors">
                 Giris Yap
             </button>
+            {% else %}
+            <button type="submit"
+                class="w-full flex justify-center py-3 px-4 rounded-xl text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 transition-colors">
+                Giris Yap
+            </button>
+            {% endif %}
         </form>
 
         <p class="text-center text-sm text-brand-300">

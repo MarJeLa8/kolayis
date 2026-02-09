@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Hosgeldiniz - KolayIS{% endblock %}
+{% block page_title %}Hosgeldiniz! Hadi Baslayalim{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Progress Steps -->
+    <div class="mb-8 flex items-center justify-center gap-2">
+        <div id="step-ind-1" class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-bold">1</div>
+        <div class="w-12 h-0.5 bg-gray-200 dark:bg-gray-700"></div>
+        <div id="step-ind-2" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 flex items-center justify-center text-sm font-bold">2</div>
+        <div class="w-12 h-0.5 bg-gray-200 dark:bg-gray-700"></div>
+        <div id="step-ind-3" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 flex items-center justify-center text-sm font-bold">3</div>
+    </div>
+
+    <!-- Step 1: Isletme Bilgileri -->
+    <div id="step1" class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Isletme Bilgileri</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Isletmeniz hakkinda bize biraz bilgi verin</p>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Isletme / Sirket Adi</label>
+                <input type="text" id="ob_company" class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" placeholder="Sirket Adi Ltd. Sti.">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sektor</label>
+                <select id="ob_sector" class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Seciniz...</option>
+                    <option>Bilisim / Yazilim</option>
+                    <option>E-ticaret</option>
+                    <option>Perakende</option>
+                    <option>Hizmet</option>
+                    <option>Uretim</option>
+                    <option>Saglik</option>
+                    <option>Egitim</option>
+                    <option>Insaat</option>
+                    <option>Gida</option>
+                    <option>Diger</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kac calisaniniz var?</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button type="button" onclick="selectSize(this, '1-5')" class="size-btn px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:border-indigo-500 transition text-gray-700 dark:text-gray-300">1-5</button>
+                    <button type="button" onclick="selectSize(this, '6-20')" class="size-btn px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:border-indigo-500 transition text-gray-700 dark:text-gray-300">6-20</button>
+                    <button type="button" onclick="selectSize(this, '21-50')" class="size-btn px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:border-indigo-500 transition text-gray-700 dark:text-gray-300">21-50</button>
+                    <button type="button" onclick="selectSize(this, '50+')" class="size-btn px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:border-indigo-500 transition text-gray-700 dark:text-gray-300">50+</button>
+                </div>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end">
+            <button onclick="goToStep(2)" class="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition">Devam</button>
+        </div>
+    </div>
+
+    <!-- Step 2: Ilk Musteri -->
+    <div id="step2" class="hidden bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Ilk Musterinizi Ekleyin</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Bir musteri ekleyerek sistemi denemeye baslayin (sonra da ekleyebilirsiniz)</p>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Musteri / Sirket Adi</label>
+                <input type="text" id="ob_cust_name" class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" placeholder="ABC Ltd. Sti.">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                    <input type="email" id="ob_cust_email" class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" placeholder="info@abc.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefon</label>
+                    <input type="text" id="ob_cust_phone" class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" placeholder="0532 123 4567">
+                </div>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-between">
+            <button onclick="goToStep(1)" class="px-6 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 transition">Geri</button>
+            <div class="flex gap-3">
+                <button onclick="goToStep(3)" class="px-6 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 transition">Atla</button>
+                <button onclick="saveCustomerAndNext()" class="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition">Kaydet & Devam</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Tamamlandi -->
+    <div id="step3" class="hidden bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+        <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Her Sey Hazir!</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">KolayIS'i kullanmaya baslayabilirsiniz. 14 gunluk Pro deneme sureciniz baslamistir.</p>
+
+        <div class="grid grid-cols-2 gap-3 max-w-sm mx-auto mb-6">
+            <a href="/customers" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition">Musteriler</a>
+            <a href="/invoices" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition">Faturalar</a>
+            <a href="/pipeline" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition">Pipeline</a>
+            <a href="/ai-assistant" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition">AI Asistan</a>
+        </div>
+
+        <a href="/dashboard" class="inline-block px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/30 transition">
+            Dashboard'a Git
+        </a>
+    </div>
+</div>
+
+<script>
+var selectedSize = '';
+function selectSize(btn, size) {
+    document.querySelectorAll('.size-btn').forEach(function(b) {
+        b.classList.remove('border-indigo-500','bg-indigo-50','dark:bg-indigo-900/20','text-indigo-700');
+    });
+    btn.classList.add('border-indigo-500','bg-indigo-50','dark:bg-indigo-900/20','text-indigo-700');
+    selectedSize = size;
+}
+
+function goToStep(n) {
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.add('hidden');
+    document.getElementById('step' + n).classList.remove('hidden');
+
+    for (var i = 1; i <= 3; i++) {
+        var ind = document.getElementById('step-ind-' + i);
+        if (i <= n) {
+            ind.classList.remove('bg-gray-200','dark:bg-gray-700','text-gray-500');
+            ind.classList.add('bg-indigo-600','text-white');
+        } else {
+            ind.classList.remove('bg-indigo-600','text-white');
+            ind.classList.add('bg-gray-200','dark:bg-gray-700','text-gray-500');
+        }
+    }
+}
+
+function saveCustomerAndNext() {
+    var name = document.getElementById('ob_cust_name').value.trim();
+    if (!name) { goToStep(3); return; }
+
+    var formData = new FormData();
+    formData.append('company_name', name);
+    formData.append('email', document.getElementById('ob_cust_email').value.trim());
+    formData.append('phone', document.getElementById('ob_cust_phone').value.trim());
+
+    fetch('/onboarding/add-customer', { method: 'POST', body: formData })
+        .then(function() { goToStep(3); })
+        .catch(function() { goToStep(3); });
+}
+</script>
+{% endblock %}

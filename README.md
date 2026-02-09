@@ -1,8 +1,10 @@
-# KolayIS
+# KolayIS - Acik Kaynak CRM
 
-Kucuk isletmeler icin full-stack CRM uygulamasi. Musteri, fatura, urun, stok, teklif ve gelir-gider yonetimini tek bir yerden yapin.
+Kucuk ve orta olcekli isletmeler icin full-stack CRM uygulamasi. Musteri, fatura, urun, stok, teklif, satis pipeline ve gelir-gider yonetimini tek bir yerden yapin.
 
-**Tech Stack:** Python, FastAPI, PostgreSQL, SQLAlchemy, Jinja2, Tailwind CSS
+**Tamamen ucretsiz ve acik kaynak kodlu.**
+
+**Tech Stack:** Python 3.13, FastAPI, PostgreSQL, SQLAlchemy 2.0, Jinja2, Tailwind CSS
 
 ![Python](https://img.shields.io/badge/Python-3.13-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
@@ -13,12 +15,49 @@ Kucuk isletmeler icin full-stack CRM uygulamasi. Musteri, fatura, urun, stok, te
 
 ## Ozellikler
 
-### Temel
+### Temel CRM
 - **Musteri Yonetimi** - CRUD, notlar, arama, filtreleme, durum takibi
-- **Urun/Hizmet Yonetimi** - Fiyat, KDV orani, stok takibi
+- **Urun/Hizmet Yonetimi** - Fiyat, KDV orani, stok takibi, stok hareketleri
 - **Faturalama** - Kalem bazli fatura, KDV hesaplama, kismi odeme takibi
 - **Teklif/Proforma** - Teklif olusturma, faturaya cevirme
 - **Gelir-Gider Takibi** - Kategoriler, ozet, filtreler
+
+### Satis Pipeline
+- **Kanban Board** - Surukle-birak ile firsat yonetimi (HTML5 Drag API)
+- **Deal Asamalari** - Lead, Teklif, Muzakere, Kazanildi, Kaybedildi
+- **Firma/Kisi Bazli** - Musterilere bagli firsat takibi
+- **Deger Takibi** - Tahmini gelir ve kapanma tarihi
+
+### AI Asistan
+- **Akilli Analizler** - Gelir, gider, musteri ve pipeline analizi
+- **Kullanim Kilavuzu** - Nasil yapilir sorularina otomatik yanitlar
+- **Offline Motor** - API anahtari olmadan da akilli yanit uretimi
+- **Claude API Destegi** - Opsiyonel Anthropic API entegrasyonu
+
+### WhatsApp Entegrasyonu
+- **Meta Cloud API** - WhatsApp Business mesajlasma
+- **Musteri Baglantisi** - Musterilere dogrudan mesaj gonderme
+- **Mesaj Gecmisi** - Gonderilen mesajlarin kaydi
+
+### Bildirim Merkezi
+- **Canli Bildirimler** - Zil ikonu ile anlik bildirim
+- **Polling** - Otomatik yeni bildirim kontrolu
+- **Kategoriler** - Fatura, odeme, vade, musteri bildirimleri
+
+### Musteri Portali
+- **Ayri Giris Sistemi** - Erisim kodu + PIN ile musteri girisi
+- **Fatura Goruntuleme** - Musteriler kendi faturalarini gorebilir
+- **Dashboard** - Borc, odeme, vade ozeti
+
+### PWA (Progressive Web App)
+- **Yerel Uygulama** - Ana ekrana ekleyerek kullanma
+- **Service Worker** - Offline destek
+- **Manifest** - Tam ekran uygulama deneyimi
+
+### Ozel Alanlar
+- **Dinamik Alan Tanimlama** - Entity bazli ozel alanlar (text, number, date, select)
+- **Musteri/Urun/Fatura** - Her varlik icin ayri alan tanimlari
+- **Form Entegrasyonu** - Detay sayfalarinda otomatik gosterim
 
 ### Otomasyon
 - **Tekrarlayan Faturalar** - Haftalik, aylik, ceyreklik, yillik otomatik uretim
@@ -26,8 +65,8 @@ Kucuk isletmeler icin full-stack CRM uygulamasi. Musteri, fatura, urun, stok, te
 - **Webhook Bildirimleri** - HMAC-SHA256 imzali, olay bazli bildirimler
 
 ### Raporlama
-- **Dashboard** - Ozet istatistikler, grafikler
-- **Detayli Raporlar** - Top 5 musteri/urun, tarih filtresi, Chart.js grafikleri
+- **Dashboard** - Ozet istatistikler, grafikler (Chart.js)
+- **Detayli Raporlar** - Top 5 musteri/urun, tarih filtresi
 - **Aktivite Logu** - Tum CRUD islemlerinin kaydi
 - **Takvim Gorunumu** - Fatura, vade ve odeme tarihleri
 
@@ -46,13 +85,26 @@ Kucuk isletmeler icin full-stack CRM uygulamasi. Musteri, fatura, urun, stok, te
 - **Guvenlik Header'lari** - XSS, clickjacking, MIME korumalari
 
 ### Diger
-- **Musteri Portali** - Musterilerin kendi faturalarini gormesi
-- **Global Arama** - Ctrl+K ile hizli arama (AJAX)
+- **Global Arama** - Ctrl+K ile hizli arama (musteri, urun, fatura)
 - **Dark Mode** - Tema toggle + sistem tercihi
 - **Mobil Uyumlu** - Responsive tasarim
 - **Dosya Ekleri** - Musteri ve faturalara dosya yukleme
 - **Toplu Islemler** - Musteri/urun silme, fatura durum guncelleme
 - **Email Gonderme** - SMTP ile fatura/teklif gonderimi
+- **Landing Page** - Pazarlama sayfasi
+- **Onboarding Wizard** - Ilk kullanim rehberi
+
+---
+
+## Ekran Goruntuleri
+
+| Dashboard | Fatura Detay |
+|-----------|-------------|
+| Ozet istatistikler, grafikler | Kalem bazli, PDF cikti |
+
+| Satis Pipeline | AI Asistan |
+|----------------|------------|
+| Kanban surukle-birak | Akilli analiz ve kilavuz |
 
 ---
 
@@ -60,7 +112,7 @@ Kucuk isletmeler icin full-stack CRM uygulamasi. Musteri, fatura, urun, stok, te
 
 ### Gereksinimler
 - Python 3.13+
-- PostgreSQL 16+ (veya Docker)
+- PostgreSQL 16+
 - Git
 
 ### 1. Projeyi klonla
@@ -87,8 +139,10 @@ pip install -r requirements.txt
 
 ### 4. Veritabanini baslat
 ```bash
-# Docker ile PostgreSQL
+# Docker ile PostgreSQL (opsiyonel)
 docker-compose up -d
+
+# Veya mevcut PostgreSQL'e baglan - .env'de DATABASE_URL'i ayarla
 
 # Migration'lari calistir
 alembic upgrade head
@@ -96,10 +150,8 @@ alembic upgrade head
 
 ### 5. Ortam degiskenlerini ayarla
 ```bash
-# .env.example dosyasini kopyala
 cp .env.example .env
-
-# .env dosyasini duzenle (SECRET_KEY, SMTP ayarlari vs.)
+# .env dosyasini duzenle
 ```
 
 ### 6. Uygulamayi calistir
@@ -109,14 +161,6 @@ uvicorn kolayis.main:app --reload --port 8000
 
 Uygulama: http://localhost:8000
 API Dokumantasyonu: http://localhost:8000/docs
-
----
-
-## Docker ile Production Deploy
-
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
 
 ---
 
@@ -133,6 +177,10 @@ docker-compose -f docker-compose.prod.yml up -d
 | `SMTP_PASSWORD` | SMTP sifresi | - |
 | `TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key | - |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | - |
+| `ANTHROPIC_API_KEY` | Claude AI API anahtari (opsiyonel) | - |
+| `AI_MODEL` | AI model adi | `claude-sonnet-4-5-20250929` |
+| `WHATSAPP_API_TOKEN` | Meta WhatsApp API token | - |
+| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp telefon numarasi ID | - |
 
 ---
 
@@ -140,16 +188,17 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ```
 kolayis/
-├── models/          # SQLAlchemy modelleri (13 model)
-├── schemas/         # Pydantic semalari (12 sema)
-├── services/        # Is mantigi servisleri (18 servis)
-├── routers/         # API ve web route'lari (7 router)
-├── templates/       # Jinja2 HTML sablonlari (51 sayfa)
+├── models/          # SQLAlchemy modelleri
+├── schemas/         # Pydantic semalari
+├── services/        # Is mantigi servisleri
+├── routers/         # API ve web route'lari
+├── templates/       # Jinja2 HTML sablonlari (55+ sayfa)
+├── static/          # Statik dosyalar (manifest, icons)
 ├── main.py          # FastAPI uygulama giris noktasi
 ├── config.py        # Uygulama ayarlari
 ├── database.py      # Veritabani baglantisi
 └── dependencies.py  # Bagimlilk enjeksiyonlari
-tests/               # pytest test suite (48 test)
+tests/               # pytest test suite
 alembic/             # Veritabani migration'lari
 ```
 
@@ -160,8 +209,6 @@ alembic/             # Veritabani migration'lari
 ```bash
 pytest
 ```
-
-48 test: auth, customers, products, invoices
 
 ---
 
@@ -176,6 +223,9 @@ REST API `/api/v1/` altinda sunulur. Swagger UI: http://localhost:8000/docs
 | `GET /api/v1/customers` | Musteri listesi |
 | `GET /api/v1/products` | Urun listesi |
 | `GET /api/v1/invoices` | Fatura listesi |
+| `POST /api/v1/ai/ask` | AI Asistan'a soru sor |
+| `POST /api/v1/whatsapp/send` | WhatsApp mesaj gonder |
+| `GET /api/v1/notifications` | Bildirimler |
 
 ---
 
@@ -184,10 +234,10 @@ REST API `/api/v1/` altinda sunulur. Swagger UI: http://localhost:8000/docs
 | Teknoloji | Kullanim |
 |-----------|----------|
 | **FastAPI** | Web framework, REST API |
-| **SQLAlchemy** | ORM, veritabani islemleri |
+| **SQLAlchemy 2.0** | ORM, veritabani islemleri |
 | **PostgreSQL** | Veritabani |
 | **Jinja2** | HTML template engine |
-| **Tailwind CSS** | UI styling |
+| **Tailwind CSS** | UI styling (CDN) |
 | **Chart.js** | Grafik ve raporlar |
 | **xhtml2pdf** | PDF olusturma |
 | **openpyxl** | Excel import/export |
@@ -198,6 +248,18 @@ REST API `/api/v1/` altinda sunulur. Swagger UI: http://localhost:8000/docs
 
 ---
 
+## Katki
+
+Pull request'ler memnuniyetle karsilanir! Buyuk degisiklikler icin once bir issue acin.
+
+1. Fork edin
+2. Feature branch olusturun (`git checkout -b feature/yeni-ozellik`)
+3. Degisikliklerinizi commit edin (`git commit -m 'Yeni ozellik eklendi'`)
+4. Push edin (`git push origin feature/yeni-ozellik`)
+5. Pull Request acin
+
+---
+
 ## Lisans
 
-MIT
+MIT - Detaylar icin [LICENSE](LICENSE) dosyasina bakin.

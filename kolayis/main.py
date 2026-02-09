@@ -2,7 +2,8 @@ import logging
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -11,7 +12,7 @@ from starlette.responses import Response
 
 from kolayis.logging_config import setup_logging
 from kolayis.rate_limit import limiter
-from kolayis.routers import auth, customers, notes, web, products_api, invoices_api, portal
+from kolayis.routers import auth, customers, notes, web, products_api, invoices_api, portal, notifications_api, deals_api, ai_api
 
 # Loglama sistemini baslat (uygulama ayaga kalkmadan once)
 setup_logging()
@@ -26,6 +27,9 @@ app = FastAPI(
 )
 
 logger.info("KolayIS uygulamasi baslatiliyor...")
+
+# Static dosyalar (PWA manifest, icons, service worker)
+app.mount("/static", StaticFiles(directory="kolayis/static"), name="static")
 
 # slowapi'yi FastAPI state'e bagla
 app.state.limiter = limiter
@@ -119,6 +123,15 @@ app.include_router(notes.router, prefix="/api/v1/customers", tags=["Gorusme Notl
 app.include_router(products_api.router, prefix="/api/v1/products", tags=["Urunler API"])
 app.include_router(invoices_api.router, prefix="/api/v1/invoices", tags=["Faturalar API"])
 
+# Bildirim API
+app.include_router(notifications_api.router, prefix="/api/v1/notifications", tags=["Bildirimler"])
+
+# Satis Pipeline API
+app.include_router(deals_api.router, prefix="/api/v1/pipeline", tags=["Satis Pipeline"])
+
+# AI Asistan API
+app.include_router(ai_api.router, prefix="/api/v1/ai", tags=["AI Asistan"])
+
 # Musteri Portali router'i
 app.include_router(portal.router, tags=["Musteri Portali"])
 
@@ -126,7 +139,15 @@ app.include_router(portal.router, tags=["Musteri Portali"])
 app.include_router(web.router, tags=["Web Arayuz"])
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse("kolayis/static/favicon.ico")
+
+
 @app.get("/")
-def root():
-    """Ana sayfa - dashboard'a yonlendir."""
-    return RedirectResponse(url="/dashboard")
+def root(request: Request):
+    """Ana sayfa - giris yapmissa dashboard, yapmamissa landing page."""
+    token = request.cookies.get("access_token")
+    if token:
+        return RedirectResponse(url="/dashboard")
+    return _error_templates.TemplateResponse("landing.html", {"request": request})

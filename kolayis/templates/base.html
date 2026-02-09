@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KolayIS">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
     <title>{% block title %}KolayIS{% endblock %}</title>
     <!-- Tema: flash onleme - sayfa renderlanmadan once calistir -->
     <script>
@@ -103,6 +109,10 @@
                     </span>
                     <span id="overdueCountBadge" class="hidden ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full"></span>
                 </a>
+                <a href="/pipeline" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'pipeline' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+                    Pipeline
+                </a>
                 <a href="/quotations" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'quotations' %}active text-white{% endif %}">
                     <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                     Teklifler
@@ -127,10 +137,33 @@
                     <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                     Raporlar
                 </a>
+                <a href="/ai-assistant" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'ai' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                    AI Asistan
+                </a>
+                <a href="/whatsapp" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'whatsapp' %}active text-white{% endif %}">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.546 20.2A1.5 1.5 0 003.8 21.454l3.032-.892A9.96 9.96 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 01-4.243-1.214l-.305-.186-1.886.554.567-1.852-.203-.322A7.96 7.96 0 014 12a8 8 0 1116 0 8 8 0 01-8 8z"/></svg>
+                    WhatsApp
+                </a>
                 <a href="/activities" class="sidebar-link flex items-center px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'activities' %}active text-white{% endif %}">
                     <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Aktiviteler
                 </a>
+                <a href="/notifications" class="sidebar-link flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-gray-300 {% if active_page == 'notifications' %}active text-white{% endif %}">
+                    <span class="flex items-center">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        Bildirimler
+                    </span>
+                    <span id="sidebarNotifBadge" class="hidden ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full"></span>
+                </a>
+
+                <div class="pt-4 mt-4 border-t border-white/10">
+                    <p class="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ayarlar</p>
+                    <a href="/custom-fields" class="sidebar-link flex items-center px-3 py-2 rounded-lg text-sm text-gray-300 {% if active_page == 'custom_fields' %}active text-white{% endif %}">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                        Ozel Alanlar
+                    </a>
+                </div>
 
                 <div class="pt-4 mt-4 border-t border-white/10">
                     <p class="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Veri Aktarimi</p>
@@ -260,6 +293,34 @@
                 </div>
 
                 <div class="flex items-center space-x-4">
+                    <!-- Bildirim zili -->
+                    <div class="relative" id="notificationWrapper">
+                        <button onclick="toggleNotifications()" class="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Bildirimler">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <!-- Okunmamis sayac badge -->
+                            <span id="notifBadge" class="hidden absolute -top-0.5 -right-0.5 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">0</span>
+                        </button>
+
+                        <!-- Bildirim dropdown -->
+                        <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+                            <!-- Header -->
+                            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Bildirimler</h3>
+                                <button onclick="markAllNotificationsRead()" class="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">Tumunu okundu yap</button>
+                            </div>
+                            <!-- Bildirim listesi -->
+                            <div id="notifList" class="max-h-96 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+                                <div class="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    Bildirim yok
+                                </div>
+                            </div>
+                            <!-- Footer -->
+                            <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-2 bg-gray-50 dark:bg-gray-800/50">
+                                <a href="/notifications" class="block text-center text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium py-1">Tum bildirimleri gor</a>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tema degistirme butonu -->
                     <button onclick="toggleTheme()" id="themeToggleBtn" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Tema Degistir">
                         <!-- Gunes ikonu (dark modda gorunur) -->
@@ -545,6 +606,164 @@
         });
     })();
 
+    // --- Bildirim Merkezi ---
+    (function() {
+        var notifBadge = document.getElementById('notifBadge');
+        var notifDropdown = document.getElementById('notifDropdown');
+        var notifList = document.getElementById('notifList');
+        if (!notifBadge) return;
+
+        // Renk ayarlari
+        var colorMap = {
+            green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+            red: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
+            yellow: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400',
+            orange: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+            blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+            purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+            gray: 'bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400'
+        };
+
+        var iconMap = {
+            'check-circle': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            'exclamation-circle': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            'clock': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            'currency-dollar': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            'exclamation-triangle': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>',
+            'user-plus': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>',
+            'thumb-up': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905a3.61 3.61 0 01-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path></svg>',
+            'refresh': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>',
+            'information-circle': '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+        };
+
+        function timeAgo(dateStr) {
+            var now = new Date();
+            var date = new Date(dateStr);
+            var diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'Az once';
+            if (diff < 3600) return Math.floor(diff / 60) + ' dk once';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' saat once';
+            if (diff < 604800) return Math.floor(diff / 86400) + ' gun once';
+            return date.toLocaleDateString('tr-TR');
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderNotifications(data) {
+            var items = data.notifications;
+            if (!items || items.length === 0) {
+                notifList.innerHTML = '<div class="p-6 text-center text-sm text-gray-500 dark:text-gray-400">Bildirim yok</div>';
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < items.length; i++) {
+                var n = items[i];
+                var cfg = n.type_config || {};
+                var color = colorMap[cfg.color] || colorMap.gray;
+                var icon = iconMap[cfg.icon] || iconMap['information-circle'];
+                var unreadClass = n.is_read ? '' : 'bg-brand-50/50 dark:bg-brand-900/10';
+
+                html += '<div class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer ' + unreadClass + '"';
+                if (n.link) {
+                    html += ' onclick="window.location.href=\'' + n.link + '\'; markNotifRead(\'' + n.id + '\')"';
+                } else {
+                    html += ' onclick="markNotifRead(\'' + n.id + '\')"';
+                }
+                html += '>';
+                // Ikon
+                html += '<div class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ' + color + '">';
+                html += icon;
+                html += '</div>';
+                // Icerik
+                html += '<div class="flex-1 min-w-0">';
+                html += '<p class="text-sm font-medium text-gray-900 dark:text-gray-100">' + escapeHtml(n.title) + '</p>';
+                html += '<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">' + escapeHtml(n.message) + '</p>';
+                html += '<p class="text-xs text-gray-400 dark:text-gray-500 mt-1">' + timeAgo(n.created_at) + '</p>';
+                html += '</div>';
+                // Okunmamis noktasi
+                if (!n.is_read) {
+                    html += '<div class="flex-shrink-0 mt-1.5"><div class="w-2.5 h-2.5 bg-brand-500 rounded-full"></div></div>';
+                }
+                html += '</div>';
+            }
+            notifList.innerHTML = html;
+        }
+
+        function updateBadge(count) {
+            var sidebarBadge = document.getElementById('sidebarNotifBadge');
+            if (count > 0) {
+                var label = count > 99 ? '99+' : count;
+                notifBadge.textContent = label;
+                notifBadge.classList.remove('hidden');
+                if (sidebarBadge) { sidebarBadge.textContent = label; sidebarBadge.classList.remove('hidden'); }
+            } else {
+                notifBadge.classList.add('hidden');
+                if (sidebarBadge) { sidebarBadge.classList.add('hidden'); }
+            }
+        }
+
+        // Bildirimleri yukle
+        window.loadNotifications = function() {
+            fetch('/api/v1/notifications?limit=10')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    renderNotifications(data);
+                    updateBadge(data.unread_count);
+                })
+                .catch(function() {});
+        };
+
+        // Okunmamis sayaci guncelle
+        window.refreshNotifCount = function() {
+            fetch('/api/v1/notifications/unread-count')
+                .then(function(r) { return r.json(); })
+                .then(function(data) { updateBadge(data.count); })
+                .catch(function() {});
+        };
+
+        // Tek bildirimi okundu yap
+        window.markNotifRead = function(id) {
+            fetch('/api/v1/notifications/' + id + '/read', { method: 'POST' })
+                .then(function() { loadNotifications(); })
+                .catch(function() {});
+        };
+
+        // Tumunu okundu yap
+        window.markAllNotificationsRead = function() {
+            fetch('/api/v1/notifications/mark-all-read', { method: 'POST' })
+                .then(function() { loadNotifications(); })
+                .catch(function() {});
+        };
+
+        // Dropdown toggle
+        window.toggleNotifications = function() {
+            if (notifDropdown.classList.contains('hidden')) {
+                notifDropdown.classList.remove('hidden');
+                loadNotifications();
+            } else {
+                notifDropdown.classList.add('hidden');
+            }
+        };
+
+        // Disariya tiklaninca kapat
+        document.addEventListener('click', function(e) {
+            var wrapper = document.getElementById('notificationWrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                notifDropdown.classList.add('hidden');
+            }
+        });
+
+        // Ilk yukleme - sadece badge sayisi
+        refreshNotifCount();
+
+        // Her 30 saniyede sayaci guncelle
+        setInterval(refreshNotifCount, 30000);
+    })();
+
     // Mobil arama toggle
     function toggleMobileSearch() {
         var overlay = document.getElementById('mobileSearchOverlay');
@@ -564,5 +783,46 @@
     <!-- Auth sayfalari icin: sidebar yok, tam ekran -->
     {% block auth_content %}{% endblock %}
     {% endif %}
+
+<!-- PWA: Service Worker & Install Prompt -->
+<div id="pwaInstallBanner" class="hidden fixed bottom-4 right-4 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 max-w-sm">
+    <div class="flex items-start gap-3">
+        <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        </div>
+        <div class="flex-1">
+            <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">KolayIS'i Yukle</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Masaustune ekleyerek daha hizli eris</p>
+            <div class="flex gap-2 mt-2">
+                <button onclick="installPWA()" class="px-3 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">Yukle</button>
+                <button onclick="dismissPWA()" class="px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 rounded-lg">Sonra</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!localStorage.getItem('pwa-dismissed')) {
+        document.getElementById('pwaInstallBanner').classList.remove('hidden');
+    }
+});
+function installPWA() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
+    }
+    document.getElementById('pwaInstallBanner').classList.add('hidden');
+}
+function dismissPWA() {
+    document.getElementById('pwaInstallBanner').classList.add('hidden');
+    localStorage.setItem('pwa-dismissed', '1');
+}
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js').catch(function() {});
+}
+</script>
 </body>
 </html>

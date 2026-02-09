@@ -63,6 +63,56 @@
         </div>
     </div>
 
+    <!-- Ozel Alanlar -->
+    {% if custom_fields is defined and custom_fields %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Ozel Alanlar</h2>
+            <button onclick="document.getElementById('cfEditSection').classList.toggle('hidden')" class="text-xs text-indigo-600 hover:text-indigo-800">Duzenle</button>
+        </div>
+        <div class="px-6 py-4 grid grid-cols-2 gap-4">
+            {% for cf in custom_fields %}
+            <div>
+                <div class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{{ cf.field_name }}</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {% if cf.field_type == 'checkbox' %}
+                        {% if cf.value == '1' %}Evet{% else %}Hayir{% endif %}
+                    {% else %}
+                        {{ cf.value or '-' }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div id="cfEditSection" class="hidden px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30">
+            <form method="POST" action="/customers/{{ customer.id }}/custom-fields" class="space-y-3">
+                {% for cf in custom_fields %}
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ cf.field_name }}</label>
+                    {% if cf.field_type == 'text' %}
+                    <input type="text" name="cf_{{ cf.id }}" value="{{ cf.value or '' }}" class="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    {% elif cf.field_type == 'number' %}
+                    <input type="number" step="any" name="cf_{{ cf.id }}" value="{{ cf.value or '' }}" class="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    {% elif cf.field_type == 'date' %}
+                    <input type="date" name="cf_{{ cf.id }}" value="{{ cf.value or '' }}" class="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    {% elif cf.field_type == 'select' %}
+                    <select name="cf_{{ cf.id }}" class="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <option value="">Secin...</option>
+                        {% if cf.options %}{% for opt in cf.options %}<option value="{{ opt }}" {% if cf.value == opt %}selected{% endif %}>{{ opt }}</option>{% endfor %}{% endif %}
+                    </select>
+                    {% elif cf.field_type == 'checkbox' %}
+                    <input type="checkbox" name="cf_{{ cf.id }}" value="1" {% if cf.value == '1' %}checked{% endif %} class="w-4 h-4 text-indigo-600 border-gray-300 rounded">
+                    {% elif cf.field_type == 'textarea' %}
+                    <textarea name="cf_{{ cf.id }}" rows="2" class="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">{{ cf.value or '' }}</textarea>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">Kaydet</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Gorusme notlari -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
         <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">

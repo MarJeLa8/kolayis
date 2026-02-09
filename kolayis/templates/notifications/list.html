@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Bildirimler - KolayIS{% endblock %}
+{% block page_title %}Bildirimler{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-2">
+    <button onclick="markAllRead()" class="text-xs px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-900/50 transition-colors font-medium">
+        Tumunu Okundu Yap
+    </button>
+    <button onclick="clearRead()" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium">
+        Okunmuslari Temizle
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filtreler -->
+<div class="mb-6 flex items-center space-x-3">
+    <button onclick="filterNotifs('all')" id="filterAll" class="px-4 py-2 text-sm rounded-lg font-medium bg-brand-500 text-white">
+        Tumu ({{ total }})
+    </button>
+    <button onclick="filterNotifs('unread')" id="filterUnread" class="px-4 py-2 text-sm rounded-lg font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+        Okunmamis ({{ unread_count }})
+    </button>
+</div>
+
+<!-- Bildirim listesi -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    {% if notifications %}
+    <div class="divide-y divide-gray-100 dark:divide-gray-700">
+        {% for n in notifications %}
+        <div class="flex items-start gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors {% if not n.is_read %}bg-brand-50/30 dark:bg-brand-900/10{% endif %}" id="notif-{{ n.id }}">
+            <!-- Ikon -->
+            <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center
+                {% if n.notification_type in ['invoice_paid', 'payment_received', 'quotation_accepted'] %}bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400
+                {% elif n.notification_type in ['invoice_overdue'] %}bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400
+                {% elif n.notification_type in ['invoice_due_soon'] %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400
+                {% elif n.notification_type in ['stock_low'] %}bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400
+                {% elif n.notification_type in ['customer_new'] %}bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400
+                {% elif n.notification_type in ['recurring_generated'] %}bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400
+                {% else %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400
+                {% endif %}">
+                {% if n.notification_type in ['invoice_paid', 'payment_received', 'quotation_accepted'] %}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% elif n.notification_type == 'invoice_overdue' %}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% elif n.notification_type == 'stock_low' %}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+                {% elif n.notification_type == 'customer_new' %}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                {% else %}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% endif %}
+            </div>
+
+            <!-- Icerik -->
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ n.title }}</h4>
+                    {% if not n.is_read %}
+                    <span class="w-2.5 h-2.5 bg-brand-500 rounded-full flex-shrink-0 ml-2"></span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{{ n.message }}</p>
+                <div class="flex items-center gap-4 mt-2">
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ n.created_at.strftime('%d.%m.%Y %H:%M') if n.created_at else '' }}</span>
+                    {% if n.link %}
+                    <a href="{{ n.link }}" class="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">Goruntule</a>
+                    {% endif %}
+                    {% if not n.is_read %}
+                    <button onclick="markOneRead('{{ n.id }}')" class="text-xs text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 font-medium">Okundu yap</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sil butonu -->
+            <button onclick="deleteNotif('{{ n.id }}')" class="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Sil">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Sayfalama -->
+    {% if total_pages > 1 %}
+    <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        <span class="text-sm text-gray-600 dark:text-gray-400">Toplam {{ total }} bildirim</span>
+        <div class="flex items-center space-x-2">
+            {% if page > 1 %}
+            <a href="?page={{ page - 1 }}&filter={{ current_filter }}" class="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300">Onceki</a>
+            {% endif %}
+            <span class="text-sm text-gray-600 dark:text-gray-400">{{ page }} / {{ total_pages }}</span>
+            {% if page < total_pages %}
+            <a href="?page={{ page + 1 }}&filter={{ current_filter }}" class="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300">Sonraki</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="p-12 text-center">
+        <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+        <p class="text-gray-500 dark:text-gray-400 text-lg font-medium">Bildirim yok</p>
+        <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Yeni bildirimler burada gorunecek</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function markAllRead() {
+    fetch('/api/v1/notifications/mark-all-read', { method: 'POST' })
+        .then(function() { location.reload(); });
+}
+
+function clearRead() {
+    fetch('/api/v1/notifications/clear-read', { method: 'DELETE' })
+        .then(function() { location.reload(); });
+}
+
+function markOneRead(id) {
+    fetch('/api/v1/notifications/' + id + '/read', { method: 'POST' })
+        .then(function() { location.reload(); });
+}
+
+function deleteNotif(id) {
+    fetch('/api/v1/notifications/' + id, { method: 'DELETE' })
+        .then(function() {
+            var el = document.getElementById('notif-' + id);
+            if (el) el.remove();
+        });
+}
+
+function filterNotifs(type) {
+    if (type === 'unread') {
+        window.location.href = '/notifications?filter=unread';
+    } else {
+        window.location.href = '/notifications';
+    }
+}
+</script>
+{% endblock %}

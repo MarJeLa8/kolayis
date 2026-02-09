@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Ozel Alanlar - KolayIS{% endblock %}
+{% block page_title %}Ozel Alanlar{% endblock %}
+
+{% block header_actions %}
+<button onclick="openFieldModal()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors flex items-center space-x-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+    <span>Yeni Alan Ekle</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Entity Type Tabs -->
+<div class="mb-6 flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+    {% for et in entity_types %}
+    <button onclick="filterEntity('{{ et.key }}')"
+        id="tab-{{ et.key }}"
+        class="entity-tab flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors
+        {% if loop.first %}bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-700{% endif %}">
+        {{ et.label }}
+    </button>
+    {% endfor %}
+</div>
+
+<!-- Alan Listesi -->
+<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    {% if fields %}
+    <div class="divide-y divide-gray-100 dark:divide-gray-700">
+        {% for f in fields %}
+        <div class="field-row px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors" data-entity="{{ f.entity_type }}">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
+                        {% if f.field_type == 'text' %}bg-blue-100 dark:bg-blue-900/30 text-blue-600
+                        {% elif f.field_type == 'number' %}bg-green-100 dark:bg-green-900/30 text-green-600
+                        {% elif f.field_type == 'date' %}bg-purple-100 dark:bg-purple-900/30 text-purple-600
+                        {% elif f.field_type == 'select' %}bg-orange-100 dark:bg-orange-900/30 text-orange-600
+                        {% elif f.field_type == 'checkbox' %}bg-pink-100 dark:bg-pink-900/30 text-pink-600
+                        {% else %}bg-gray-100 dark:bg-gray-700 text-gray-600{% endif %}">
+                        {% if f.field_type == 'text' %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path></svg>
+                        {% elif f.field_type == 'number' %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                        {% elif f.field_type == 'date' %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        {% elif f.field_type == 'select' %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+                        {% elif f.field_type == 'checkbox' %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        {% else %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ f.field_name }}</span>
+                            {% if f.is_required %}
+                            <span class="text-xs px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">Zorunlu</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-xs text-gray-500">
+                                {% if f.entity_type == 'customer' %}Musteri
+                                {% elif f.entity_type == 'invoice' %}Fatura
+                                {% elif f.entity_type == 'product' %}Urun
+                                {% elif f.entity_type == 'deal' %}Firsat{% endif %}
+                            </span>
+                            <span class="text-xs text-gray-400">•</span>
+                            <span class="text-xs text-gray-500">
+                                {% if f.field_type == 'text' %}Metin
+                                {% elif f.field_type == 'number' %}Sayi
+                                {% elif f.field_type == 'date' %}Tarih
+                                {% elif f.field_type == 'select' %}Secim Listesi
+                                {% elif f.field_type == 'checkbox' %}Onay Kutusu
+                                {% elif f.field_type == 'textarea' %}Uzun Metin{% endif %}
+                            </span>
+                            {% if f.field_type == 'select' and f.options %}
+                            <span class="text-xs text-gray-400">• {{ f.options|length }} secenek</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="/custom-fields/{{ f.id }}/delete" onclick="return confirm('Bu ozel alani silmek istediginize emin misiniz?')"
+                        class="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-12 text-center">
+        <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"></path></svg>
+        <p class="text-gray-500 dark:text-gray-400 text-lg font-medium">Henuz ozel alan tanimlanmamis</p>
+        <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Musteriler, faturalar veya urunler icin ozel alanlar ekleyin</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Yeni Alan Modal -->
+<div id="fieldModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Yeni Ozel Alan</h3>
+            <button onclick="closeFieldModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        </div>
+        <form action="/custom-fields/new" method="POST" class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Varlik Tipi *</label>
+                <select name="entity_type" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+                    <option value="customer">Musteri</option>
+                    <option value="invoice">Fatura</option>
+                    <option value="product">Urun</option>
+                    <option value="deal">Firsat</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alan Adi *</label>
+                <input type="text" name="field_name" required maxlength="100" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" placeholder="ornegin: Vergi No, Seri No, Renk...">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alan Tipi *</label>
+                <select name="field_type" id="fieldTypeSelect" onchange="toggleOptionsInput()" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+                    <option value="text">Metin</option>
+                    <option value="number">Sayi</option>
+                    <option value="date">Tarih</option>
+                    <option value="select">Secim Listesi</option>
+                    <option value="checkbox">Onay Kutusu</option>
+                    <option value="textarea">Uzun Metin</option>
+                </select>
+            </div>
+            <div id="optionsDiv" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Secenekler (her satira bir secenek)</label>
+                <textarea name="options_text" rows="4" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" placeholder="Secenek 1&#10;Secenek 2&#10;Secenek 3"></textarea>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="is_required" id="isRequired" value="1" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                <label for="isRequired" class="text-sm text-gray-700 dark:text-gray-300">Zorunlu alan</label>
+            </div>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="closeFieldModal()" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 rounded-lg">Iptal</button>
+                <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openFieldModal() { document.getElementById('fieldModal').classList.remove('hidden'); }
+function closeFieldModal() { document.getElementById('fieldModal').classList.add('hidden'); }
+function toggleOptionsInput() {
+    var sel = document.getElementById('fieldTypeSelect').value;
+    document.getElementById('optionsDiv').classList.toggle('hidden', sel !== 'select');
+}
+function filterEntity(type) {
+    document.querySelectorAll('.entity-tab').forEach(function(t) {
+        t.classList.remove('bg-white','dark:bg-gray-700','text-gray-900','dark:text-white','shadow-sm');
+        t.classList.add('text-gray-500','dark:text-gray-400');
+    });
+    var tab = document.getElementById('tab-' + type);
+    tab.classList.add('bg-white','dark:bg-gray-700','text-gray-900','dark:text-white','shadow-sm');
+    tab.classList.remove('text-gray-500','dark:text-gray-400');
+
+    document.querySelectorAll('.field-row').forEach(function(row) {
+        if (type === 'all' || row.dataset.entity === type) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeFieldModal(); });
+</script>
+{% endblock %}

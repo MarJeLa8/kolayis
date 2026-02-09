@@ -11,7 +11,6 @@ Ana CRM'den tamamen bagimsiz bir giris sistemi kullanir:
 
 import uuid
 from typing import Annotated
-from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Form, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -21,7 +20,6 @@ from sqlalchemy.orm import Session
 from kolayis.database import get_db
 from kolayis.models.portal import PortalAccess
 from kolayis.models.invoice import Invoice
-from kolayis.models.customer import Customer
 from kolayis.services import portal as portal_service
 
 router = APIRouter(prefix="/portal", tags=["Musteri Portali"])

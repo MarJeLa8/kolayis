@@ -14,10 +14,16 @@ from kolayis.models.attachment import Attachment
 from kolayis.models.stock_movement import StockMovement
 from kolayis.models.webhook import Webhook, WebhookLog
 from kolayis.models.portal import PortalAccess
+from kolayis.models.notification import Notification
+from kolayis.models.deal import Deal, DealStage
+from kolayis.models.whatsapp_message import WhatsAppMessage
+from kolayis.models.custom_field import CustomFieldDefinition, CustomFieldValue
 
 __all__ = [
     "User", "Customer", "Note", "Product", "Invoice", "InvoiceItem",
     "Payment", "Activity", "Quotation", "QuotationItem",
     "Expense", "ExpenseCategory", "RecurringInvoice", "RecurringInvoiceItem",
     "Attachment", "StockMovement", "Webhook", "WebhookLog", "PortalAccess",
+    "Notification", "Deal", "DealStage", "WhatsAppMessage",
+    "CustomFieldDefinition", "CustomFieldValue",
 ]
